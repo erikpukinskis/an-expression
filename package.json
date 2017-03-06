@@ -1,0 +1,14 @@
+{
+  "name": "an-expression",
+  "version": "0.0.0",
+  "description": "Represent simple javascript programs in JSON",
+  "main": "main.js",
+  "dependencies": {
+    "module-library": "*",
+    "function-call": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erikpukinskis/an-expression.git"
+  }
+}
