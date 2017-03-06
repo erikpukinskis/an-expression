@@ -2,7 +2,7 @@
   "name": "an-expression",
   "version": "0.1.0",
   "description": "Represent simple javascript programs in JSON",
-  "main": "main.js",
+  "main": "an-expression.js",
   "dependencies": {
     "module-library": "*",
     "function-call": "*"

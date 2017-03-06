@@ -1,9 +1,9 @@
 var library = require("module-library")(require)
 
 module.exports = library.export(
-  "an-expression",
-  ["./an-expression", "function-call"],
-  function(anExpression, functionCall) {
+  "an-expression/Program",
+  ["function-call"],
+  function(functionCall) {
 
     var programs = {}
     var lastProgramId = 300
@@ -450,7 +450,7 @@ module.exports = library.export(
         kind: "key pair",
         key: key,
         objectExpression: objectExpression,
-        id: options.id || anExpression.id()
+        id: options.id
       }
 
       var pairIdentifier = objectExpression.id+"/"+key
@@ -506,14 +506,6 @@ module.exports = library.export(
       return false;
     }
 
-    anExpression.program = function(data) {
-      return new Program(data)
-    }
-
-    anExpression.findProgram = function(id) {
-      return Program.findById(id)
-    }
-
-    return anExpression
+    return Program
   }
 )
