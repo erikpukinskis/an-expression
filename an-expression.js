@@ -137,15 +137,14 @@ module.exports = library.export(
         var expression = anExpression.stringLiteral(string[1])
 
       } else {
-        debugger
-        throw new Error("render-module's sourceToExpression function doesn't understand this line: "+source)
+        var expression = {
+          kind: "javascript",
+          source: source,
+          id: anId(),
+        }
       }
 
       function matchToFunctionCall(match) {
-        if (match[2].match(/".*,/)) {
-          throw new Error("Your javascript is getting too fancy. If you need to use literals as function arguments, put each one on its own line. Your code: "+source)
-        }
-
         var argSources = match[2].split(",")
         var args = []
 
