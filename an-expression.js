@@ -142,6 +142,10 @@ module.exports = library.export(
       }
 
       function matchToFunctionCall(match) {
+        if (match[2].match(/".*,/)) {
+          throw new Error("Your javascript is getting too fancy. If you need to use literals as function arguments, put each one on its own line. Your code: "+source)
+        }
+
         var argSources = match[2].split(",")
         var args = []
 
