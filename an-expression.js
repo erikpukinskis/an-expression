@@ -138,7 +138,7 @@ module.exports = library.export(
 
       } else {
         var expression = {
-          kind: "javascript",
+          kind: "source",
           source: source,
           id: anId(),
         }
