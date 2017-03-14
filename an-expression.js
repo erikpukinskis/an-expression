@@ -2,8 +2,7 @@ var library = require("module-library")(require)
 
 module.exports = library.export(
   "an-expression",
-  ["./program"],
-  function(Program) {
+  function() {
     // HELPERS
 
     function pad(str) {
@@ -224,14 +223,6 @@ module.exports = library.export(
       }
 
       return names
-    }
-
-    anExpression.program = function(data) {
-      return new Program(data)
-    }
-
-    anExpression.findProgram = function(id) {
-      return Program.findById(id)
     }
 
     return anExpression
