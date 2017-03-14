@@ -178,18 +178,9 @@ module.exports = library.export(
 
     anExpression.kinds = Object.keys(codeGenerators)
 
+    anExpression.toJavascript = expressionToJavascript
 
-    // RUN
-
-    anExpression.run =
-      function(expression, fileName) {
-    
-        var js = expressionToJavascript(expression)
-
-        js = js + "\n//# sourceURL="+fileName+".js"
-
-        return eval(js)
-      }
+    // Converting back to javascript
 
     function expressionToJavascript(expression) {
 
