@@ -34,7 +34,14 @@ module.exports = library.export(
         var lines = expression.body.map(
           expressionToJavascript
         )
-        var code = "function("
+        var code = "function"
+        var name = expression.functionName
+
+        if (name) {
+          code += " "+name
+        }
+
+        code += "("
           +names
           +") {\n"
           +pad(lines.join("\n"))
