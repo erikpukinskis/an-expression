@@ -6,10 +6,14 @@ module.exports = library.export(
   function(functionCall, expressionToJavascript) {
 
 
-    function anExpression(json) {
-      if (json) { throw new Error("We don't remember how to make an expression out of JSON") }
+    function anExpression(data) {
+      var tree = new ExpressionTree()
 
-      return new ExpressionTree()
+      if (data) {
+        tree.load(data)
+      }
+
+      return tree
     }
 
     var lastExpressionInteger = typeof window == "undefined" ? 1000*1000 : 1000
@@ -54,8 +58,8 @@ module.exports = library.export(
       if (data) { this.load(data) }
     }
 
-    ExpressionTree.prototype.toJavaScript = function() {
-      return expressionToJavascript(this)
+    anExpression.toJavascript = function(expression) {
+      return expressionToJavascript(expression)
     }
 
 
