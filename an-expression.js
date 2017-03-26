@@ -21,7 +21,7 @@ module.exports = library.export(
     function anId() {
       lastExpressionInteger++
       var id = lastExpressionInteger.toString(36)
-      return "expr-"+id
+      return "exp"+id
     }
 
     // Expression Tree
@@ -35,12 +35,12 @@ module.exports = library.export(
 
     function aTreeId() {
       lastTreeId++
-      return "prog-"+lastTreeId.toString(36)
+      return "tree"+lastTreeId.toString(36)
     }
 
     function ExpressionTree(data) {
       this.expressionIdWritePosition = 0
-      this.id = aTreeId()
+      this.id = data && data.id || aTreeId()
       trees[this.id] = this
       this.expressionIds = []
       this.expressionsById = {}
@@ -96,11 +96,7 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.changed = function() {
-
-      window.__nrtvFocusSelector = ".output"
-
-      document.querySelector(".output").innerHTML = ""
-
+      
       var expression = this.root()
 
       this.onchangedCallbacks.forEach(function(callback) {
@@ -141,6 +137,7 @@ module.exports = library.export(
       })
 
       return {
+        id: this.id,
         expressionIds: this.expressionIds,
         expressionsById: dehydratedById,
         keyPairsByValueId: null,
@@ -250,13 +247,13 @@ module.exports = library.export(
       return expression[property]
     }
 
-    ExpressionTree.prototype.setProperty = function(property, expressionId, newValue, oldValue) {
+    ExpressionTree.prototype.setProperty = function(property, expressionId, newValue) {
       var expression = this.expressionsById[expressionId]
       expression[property] = newValue
       this.changed()
     }
 
-    ExpressionTree.prototype.setFloatProperty = function(property, expressionId, newValue, oldValue) {
+    ExpressionTree.prototype.setFloatProperty = function(property, expressionId, newValue) {
       var expression = expressionsById[expressionId]
       expression[property] = parseFloat(newValue)
       this.changed()
