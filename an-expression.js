@@ -75,18 +75,6 @@ module.exports = library.export(
       return expressionToJavascript(expression)
     }
 
-
-    ExpressionTree.prototype.reservePosition = function() {
-      var i = 
-      this.expressionIdWritePosition
-      this.expressionIdWritePosition++
-      return i
-    }
-
-    ExpressionTree.prototype.asBinding = function() {
-      return functionCall("library.get(\"program\").findById(\""+this.id+"\")").singleton()
-    }
-
     ExpressionTree.prototype.root = function() {
       var rootId = this.expressionIds[0]
       return this.expressionsById[rootId]
@@ -130,12 +118,12 @@ module.exports = library.export(
     ExpressionTree.prototype.data = function() {
       var parents = {}
       var dehydratedById = {}
-      var program = this
+      var tree = this
 
       this.expressionIds.forEach(function(id) {
 
-        var expression = program.expressionsById[id]
-        var parent = program.parentExpressionsByChildId[id]
+        var expression = tree.expressionsById[id]
+        var parent = tree.parentExpressionsByChildId[id]
 
         if (parent) {
           parents[id] = parent.id
@@ -183,10 +171,10 @@ module.exports = library.export(
 
     function toId(x) { return x.id }
 
-    function wetCopy(attribute, dehydrated, program) {
+    function wetCopy(attribute, dehydrated, tree) {
 
       function toExpression(id) {
-        return program.expressionsById[id]
+        return tree.expressionsById[id]
       }
       switch(attribute) {
         case "body":
@@ -204,12 +192,12 @@ module.exports = library.export(
 
           for(var key in valueIds) {
 
-            var pairId = program.pairIds[objectExpression.id+"/"+key]
+            var pairId = tree.pairIds[objectExpression.id+"/"+key]
 
-            program.addKeyPair(
+            tree.addKeyPair(
               objectExpression,
               key,
-              program.get(valueIds[key]),
+              tree.get(valueIds[key]),
               {id: pairId}
             )
           }
@@ -235,20 +223,20 @@ module.exports = library.export(
 
       this.parentExpressionsByChildId = {}
 
-      var program = this
+      var tree = this
 
       function rehydrate(id) {
 
-        var dehydrated = program.expressionsById[id]
+        var dehydrated = tree.expressionsById[id]
 
         for(var attribute in dehydrated) {
-          wetCopy(attribute, dehydrated, program)
+          wetCopy(attribute, dehydrated, tree)
         }
 
         var parentId = data.parents[id]
 
         if (parentId) {
-          program.parentExpressionsByChildId[id] = program.expressionsById[parentId]
+          tree.parentExpressionsByChildId[id] = tree.expressionsById[parentId]
         }
       }
 
@@ -265,12 +253,14 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.setProperty = function(property, expressionId, newValue) {
+      
       var expression = this.expressionsById[expressionId]
       expression[property] = newValue
       this.changed()
     }
 
     ExpressionTree.prototype.setFloatProperty = function(property, expressionId, newValue) {
+      
       var expression = expressionsById[expressionId]
       expression[property] = parseFloat(newValue)
       this.changed()
@@ -308,6 +298,7 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.renameArgument = function(expressionId, index, newName) {
+      
       var expression = this.expressionsById[expressionId]
 
       expression.argumentNames[index] = newName
@@ -316,6 +307,7 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.addFunctionArgument = function(expressionId, name) {
+      
 
       var functionExpression = this.expressionsById[expressionId]
 
@@ -326,8 +318,17 @@ module.exports = library.export(
       return index
     }
 
-    ExpressionTree.prototype.addExpressionAt = function(newExpression, i) {
+    ExpressionTree.prototype.reservePosition = function() {
+      var i = 
+      this.expressionIdWritePosition
+      this.expressionIdWritePosition++
+      return i
+    }
 
+    // This adds an expression at a specific place in the array, after we reserved it with reservePosition. It overwrites whatever is there, but we're assuming we already moved the write position:
+
+    ExpressionTree.prototype.addExpressionAt = function(newExpression, i) {
+      
       this.expressionsById[newExpression.id] = newExpression
 
       if (!newExpression.id) {
@@ -336,8 +337,10 @@ module.exports = library.export(
       this.expressionIds[i] = newExpression.id
     }
 
+    // This adds more space in the array for a new expression positioned relative to others:
 
     ExpressionTree.prototype.insertExpression = function(newExpression, relationship, relativeToThisId) {
+      
 
       var parentExpression = this.getParentOf(relativeToThisId)
 
@@ -404,7 +407,7 @@ module.exports = library.export(
       neighbors.splice(lineIndex, deleteThisMany,  newExpression)
     }
 
-    function lastDescendantAfter(program, ids, startIndex) {
+    function lastDescendantAfter(tree, ids, startIndex) {
 
       var possibleParentIds = [ids[startIndex]]
       var lastDescendant = startIndex
@@ -412,9 +415,9 @@ module.exports = library.export(
       for(var i = startIndex+1; i < ids.length; i++) {
 
         var testId = ids[i]
-        var testExpr = program.expressionsById[testId]
+        var testExpr = tree.expressionsById[testId]
 
-        var testParent = program.parentExpressionsByChildId[testId]
+        var testParent = tree.parentExpressionsByChildId[testId]
 
         if (!testParent) {
           var isDescendant = false
@@ -434,9 +437,9 @@ module.exports = library.export(
       return lastDescendant
     }
 
-    function indexBefore(program, relativeId) {
+    function indexBefore(tree, relativeId) {
 
-      var ids = program.expressionIds
+      var ids = tree.expressionIds
 
       for(var i = 0; i < ids.length; i++) {
         if (ids[i] == relativeId) {
@@ -448,16 +451,16 @@ module.exports = library.export(
 
     }
 
-    function indexAfter(program, relativeId) {
+    function indexAfter(tree, relativeId) {
 
-      var ids = program.expressionIds
+      var ids = tree.expressionIds
       var parentIdStack = []
 
       for(var i = 0; i < ids.length; i++) {
         var testId = ids[i]
 
         if (testId == relativeId) {
-          return lastDescendantAfter(program, ids, i)+1
+          return lastDescendantAfter(tree, ids, i)+1
         }
       }
 
@@ -469,6 +472,7 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.addKeyPair = function(objectExpression, key, valueExpression, options) {
+      
 
       if (!options) { options = {} }
 
@@ -516,9 +520,9 @@ module.exports = library.export(
 
       if (oldExpression.id != newExpression.id) {
 
-        delete program.parentExpressionsByChildId[oldExpression.id]
+        delete tree.parentExpressionsByChildId[oldExpression.id]
 
-        delete program.keyPairsByValueId[oldExpression.id]
+        delete tree.keyPairsByValueId[oldExpression.id]
       }
 
       this.parentExpressionsByChildId[newExpression.id] = pairExpression.objectExpression
