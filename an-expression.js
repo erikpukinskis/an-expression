@@ -7,6 +7,18 @@ module.exports = library.export(
 
 
     function anExpression(data) {
+      if (data.expressionIds) {
+        throw new Error("Tried to turn expression tree data into an expression. Try anExpression.tree(yourTreeData) instead.")
+      }
+      
+      if (!data.id) {
+        data.id = anId()
+      }
+
+      return data
+    }
+
+    anExpression.tree = function(data) {
       var tree = new ExpressionTree()
 
       if (data) {
@@ -207,6 +219,10 @@ module.exports = library.export(
     ExpressionTree.prototype.load = function(data) {
 
       this.expressionIds = data.expressionIds
+
+      if (!data.expressionIds) {
+        debugger
+      }
 
       this.expressionIdWritePosition = data.expressionIds.length
 
