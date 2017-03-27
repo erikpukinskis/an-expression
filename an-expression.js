@@ -5,12 +5,13 @@ module.exports = library.export(
   ["function-call", "./expression-to-javascript"],
   function(functionCall, expressionToJavascript) {
 
-
     function anExpression(data) {
-      if (data.expressionIds) {
+      if (!data) {
+        throw new Error("Passed nothing to anExpression(). Did you mean to make an expression tree? Try var yourTree = anExpression.tree() instead.")
+      } else if (!data.expressionIds) {
         throw new Error("Tried to turn expression tree data into an expression. Try anExpression.tree(yourTreeData) instead.")
       }
-      
+
       if (!data.id) {
         data.id = anId()
       }
