@@ -8,7 +8,7 @@ module.exports = library.export(
     function anExpression(data) {
       if (!data) {
         throw new Error("Passed nothing to anExpression(). Did you mean to make an expression tree? Try var yourTree = anExpression.tree() instead.")
-      } else if (!data.expressionIds) {
+      } else if (data.expressionIds) {
         throw new Error("Tried to turn expression tree data into an expression. Try anExpression.tree(yourTreeData) instead.")
       }
 
