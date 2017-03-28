@@ -75,6 +75,14 @@ module.exports = library.export(
       return expressionToJavascript(expression)
     }
 
+    ExpressionTree.prototype.logTo = function(universe) {
+      this.universe = universe
+    }
+
+    ExpressionTree.prototype.asBinding = function() {
+      return functionCall("library.get(\"program\").findById(\""+this.id+"\")").singleton()
+    }
+
     ExpressionTree.prototype.root = function() {
       var rootId = this.expressionIds[0]
       return this.expressionsById[rootId]
@@ -115,6 +123,14 @@ module.exports = library.export(
 
     function call(func) { func() }
 
+    function dehydrate(expression) {
+      var dehydrated = {}
+      for(var key in expression) {
+        dryCopy(key, expression, dehydrated)
+      }
+      return dehydrated
+    }
+
     ExpressionTree.prototype.data = function() {
       var parents = {}
       var dehydratedById = {}
@@ -129,12 +145,7 @@ module.exports = library.export(
           parents[id] = parent.id
         }
 
-        var dehydrated = {}
-        for(var key in expression) {
-          dryCopy(key, expression, dehydrated)
-        }
-
-        dehydratedById[id] = dehydrated
+        dehydratedById[id] = dehydrate(expression)
       })
 
       return {
@@ -225,22 +236,26 @@ module.exports = library.export(
 
       var tree = this
 
-      function rehydrate(id) {
+      this.expressionIds.forEach(function(id) {
 
         var dehydrated = tree.expressionsById[id]
 
-        for(var attribute in dehydrated) {
-          wetCopy(attribute, dehydrated, tree)
-        }
+        rehydrate(dehydrated)
 
         var parentId = data.parents[id]
 
         if (parentId) {
           tree.parentExpressionsByChildId[id] = tree.expressionsById[parentId]
         }
+      }) 
+    }
+
+    function rehydrate(dehydrated) {
+      for(var attribute in dehydrated) {
+        wetCopy(attribute, dehydrated, tree)
       }
 
-      this.expressionIds.forEach(rehydrate) 
+      return dehydrated
     }
 
     function getIds() {
@@ -253,14 +268,14 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.setProperty = function(property, expressionId, newValue) {
-      
+      throw new Error("implement log")
       var expression = this.expressionsById[expressionId]
       expression[property] = newValue
       this.changed()
     }
 
     ExpressionTree.prototype.setFloatProperty = function(property, expressionId, newValue) {
-      
+      throw new Error("implement log")
       var expression = expressionsById[expressionId]
       expression[property] = parseFloat(newValue)
       this.changed()
@@ -298,7 +313,7 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.renameArgument = function(expressionId, index, newName) {
-      
+      throw new Error("implement log")
       var expression = this.expressionsById[expressionId]
 
       expression.argumentNames[index] = newName
@@ -307,7 +322,7 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.addFunctionArgument = function(expressionId, name) {
-      
+      throw new Error("implement log")
 
       var functionExpression = this.expressionsById[expressionId]
 
@@ -325,15 +340,37 @@ module.exports = library.export(
       return i
     }
 
+    ExpressionTree.prototype.log = function(method, args, etc) {
+      var universe = this.universe
+      if (!universe) { return }
+      var args = Array.prototype.slice.call(arguments)
+
+      universe.apply(null, args)
+    }
+
+
     // This adds an expression at a specific place in the array, after we reserved it with reservePosition. It overwrites whatever is there, but we're assuming we already moved the write position:
+
+    anExpression.addAt = function(treeId, i, expressionId, dehydrated) {
+
+      var tree = anExpression.getTree(treeId)
+
+      var expression = rehydrate(dehydrated)
+      expression.id = expressionId
+
+      tree.addExpressionAt(expression, i)
+    }
 
     ExpressionTree.prototype.addExpressionAt = function(newExpression, i) {
       
+      this.log("anExpression.addAt", this.id, i, newExpression.id, dehydrate(newExpression))
+
       this.expressionsById[newExpression.id] = newExpression
 
       if (!newExpression.id) {
         throw new Error("expr "+JSON.stringify(newExpression, null, 2)+" doesn't have an id!")
       }
+
       this.expressionIds[i] = newExpression.id
     }
 
@@ -341,6 +378,7 @@ module.exports = library.export(
 
     ExpressionTree.prototype.insertExpression = function(newExpression, relationship, relativeToThisId) {
       
+      throw new Error("impl")
 
       var parentExpression = this.getParentOf(relativeToThisId)
 
@@ -472,7 +510,8 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.addKeyPair = function(objectExpression, key, valueExpression, options) {
-      
+
+      this.log("anExpression.addKeyPair", this.id, objectExpression.id, key, valueExpression.id, options)
 
       if (!options) { options = {} }
 
@@ -505,6 +544,7 @@ module.exports = library.export(
 
       return pair
     }
+
 
     ExpressionTree.prototype.setKeyValue = function(pairExpression, newExpression) {
 
