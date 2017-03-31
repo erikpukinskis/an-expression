@@ -90,6 +90,10 @@ module.exports = library.export(
       universe("anExpression.tree", this.id)
     }
 
+    ExpressionTree.prototype.builder = function() {
+      return eval("("+this.universe.source()+")")
+    }
+
     ExpressionTree.prototype.asBinding = function() {
       return functionCall("library.get(\"program\").findById(\""+this.id+"\")").singleton()
     }
@@ -182,6 +186,7 @@ module.exports = library.export(
         case "body":
         case "arguments":
         case "items":
+        case "values":
           dehydrated[attribute] = expression[attribute].map(toId)
           break
         case "expression":
@@ -204,6 +209,8 @@ module.exports = library.export(
         case "string":
         case "number":
         case "isDeclaration":
+        case "keys":
+        case "pairIds":
           dehydrated[attribute] = expression[attribute]
           break;
         case "i":
@@ -211,8 +218,11 @@ module.exports = library.export(
         case "lineIn":
         case "keys":
           // discard these. we add them in javascript-to-ezjs. Ideally we would just not f with expressions at all, and just error if we see these 
+        case "role":
+          // and this one is added by render-expression
           break;
         default:
+          console.log(JSON.stringify(expression, null, 2))
           throw new Error("should "+attribute+" stay on a dehydrated expression?")
       }
     }
@@ -226,6 +236,7 @@ module.exports = library.export(
         case "body":
         case "arguments":
         case "items":
+        case "values":
           dehydrated[attribute] = dehydrated[attribute].map(toExpression)
           break
         case "expression":
@@ -703,12 +714,18 @@ module.exports = library.export(
       function(object) {
         var expression = {
           kind: "object literal",
-          valuesByKey: {},
+          keys: [],
+          pairIds: [],
+          values: [],
           id: anId(),
         }
 
         for (var key in object) {
-          expression.valuesByKey[key] = toExpression(object[key])
+          var valueExpression = toExpression(object[key])
+
+          expression.keys.push(key)
+          expression.pairIds.push(anId())
+          expression.values.push(valueExpression)
         }
 
         return expression
