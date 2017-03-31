@@ -20,10 +20,10 @@ module.exports = library.export(
     }
 
     anExpression.tree = function(data) {
-      var tree = new ExpressionTree()
-
       if (data) {
-        tree.load(data)
+        var tree = new ExpressionTree(data)
+      } else {
+        var tree = new ExpressionTree()
       }
 
       return tree
@@ -46,6 +46,10 @@ module.exports = library.export(
       return trees[treeId]
     }
 
+    anExpression.forgetTrees = function() {
+      trees = {}
+    }
+
     function aTreeId() {
       lastTreeId++
       return "tree"+lastTreeId.toString(36)
@@ -53,8 +57,6 @@ module.exports = library.export(
 
     function ExpressionTree(data) {
       this.expressionIdWritePosition = 0
-      this.id = data && data.id || aTreeId()
-      trees[this.id] = this
       this.expressionIds = []
       this.expressionsById = {}
       this.keyPairsByValueId = {}
@@ -64,11 +66,19 @@ module.exports = library.export(
       this.getIds = getIds.bind(this)
       this.pairIds = {}
 
-      if (data && data.expressionIds.length > 0 && !data.expressionIds[0]) {
-        throw new Error("no ida!")
+      if (typeof data == "string") {
+        this.id = data
+      } else if (typeof data == "object") {
+        if (!data.expressionIds) {
+          throw new Error("Tried to create an expression tree out of weird stuff: "+data)
+        }
+        this.id = data.id
+        this.load(data)
+      } else {
+        this.id = aTreeId()
       }
 
-      if (data) { this.load(data) }
+      trees[this.id] = this
     }
 
     anExpression.toJavascript = function(expression) {
@@ -77,6 +87,7 @@ module.exports = library.export(
 
     ExpressionTree.prototype.logTo = function(universe) {
       this.universe = universe
+      universe("anExpression.tree", this.id)
     }
 
     ExpressionTree.prototype.asBinding = function() {
@@ -160,6 +171,13 @@ module.exports = library.export(
 
     function dryCopy(attribute, expression, dehydrated) {
 
+      function toId(x) {
+        if (!x) {
+          throw new Error("Tried to get an id while dry copying the \""+attribute+"\" attribute on "+JSON.stringify(expression)+" is something undefined or null there?")
+        }
+        return x.id
+      }
+
       switch(attribute) {
         case "body":
         case "arguments":
@@ -167,6 +185,9 @@ module.exports = library.export(
           dehydrated[attribute] = expression[attribute].map(toId)
           break
         case "expression":
+          if (!expression[attribute]) {
+            throw new Error("expression "+JSON.stringify(expression).slice(0,100)+"'s \""+attribute+"\" attribute is falsy")
+          }
           dehydrated[attribute] = toId(expression[attribute])
           break
         case "valuesByKey":
@@ -175,12 +196,26 @@ module.exports = library.export(
             dehydrated[attribute][key] = toId(expression[attribute][key])
           }
           break
-        default:
+        case "kind":
+        case "id":
+        case "functionName":
+        case "argumentNames":
+        case "variableName":
+        case "string":
+        case "number":
+        case "isDeclaration":
           dehydrated[attribute] = expression[attribute]
+          break;
+        case "i":
+        case "parentToAdd":
+        case "lineIn":
+        case "keys":
+          // ignore
+          break;
+        default:
+          throw new Error("should "+attribute+" stay on a dehydrated expression?")
       }
     }
-
-    function toId(x) { return x.id }
 
     function wetCopy(attribute, dehydrated, tree) {
 
@@ -240,7 +275,7 @@ module.exports = library.export(
 
         var dehydrated = tree.expressionsById[id]
 
-        rehydrate(dehydrated)
+        rehydrate(dehydrated, tree)
 
         var parentId = data.parents[id]
 
@@ -250,9 +285,17 @@ module.exports = library.export(
       }) 
     }
 
-    function rehydrate(dehydrated) {
+    function rehydrate(dehydrated, tree) {
       for(var attribute in dehydrated) {
         wetCopy(attribute, dehydrated, tree)
+      }
+
+      var kind = dehydrated.kind
+
+      if (kind == "function literal") {
+        if (!dehydrated.body) {
+          dehydrated.body = []
+        }
       }
 
       return dehydrated
@@ -355,10 +398,31 @@ module.exports = library.export(
 
       var tree = anExpression.getTree(treeId)
 
-      var expression = rehydrate(dehydrated)
+      if (!tree) {
+        throw new Error("No tree "+treeId+" just "+Object.keys(trees))
+      }
+
+      var expression = rehydrate(dehydrated, tree)
       expression.id = expressionId
 
       tree.addExpressionAt(expression, i)
+    }
+
+    anExpression.add = function(treeId, expressionId, dehydrated) {
+      var tree = anExpression.getTree(treeId)
+
+      var expression = rehydrate(dehydrated, tree)
+
+      expression.id = expressionId
+
+      var i = tree.reservePosition()
+
+      tree.addExpressionAt(expression, i)
+    }
+
+    ExpressionTree.prototype.addExpression = function(newExpression) {
+      var i = this.reservePosition()
+      this.addExpressionAt(newExpression, i)
     }
 
     ExpressionTree.prototype.addExpressionAt = function(newExpression, i) {
@@ -375,6 +439,27 @@ module.exports = library.export(
     }
 
     // This adds more space in the array for a new expression positioned relative to others:
+
+
+    anExpression.addLine = function(treeId, expressionId, functionLiteralId) {
+
+      var tree = anExpression.getTree(treeId)
+      var functionLiteral = tree.get(functionLiteralId)
+      var expression = tree.get(expressionId)
+      if (!expression) {
+        throw new Error("expression "+expressionId+" isn't in the tree: "+tree.expressionIds)
+      }
+
+      tree.addLine(expression, functionLiteral)
+    }
+
+    ExpressionTree.prototype.addLine = function(expression, functionLiteral) {
+
+      this.log("anExpression.addLine", this.id, expression.id, functionLiteral.id)
+
+      functionLiteral.body.push(expression)
+      this.setParent(expression.id, functionLiteral)
+    }
 
     ExpressionTree.prototype.insertExpression = function(newExpression, relationship, relativeToThisId) {
       
@@ -507,6 +592,18 @@ module.exports = library.export(
 
     ExpressionTree.prototype.setParent = function(childId, parent) {
       this.parentExpressionsByChildId[childId] = parent
+    }
+
+    anExpression.addKeyPair = function(treeId, objectId, key, valueId, options) {
+
+      var tree = anExpression.getTree(treeId)
+      var objectExpression = tree.get(objectId)
+      if (!objectExpression) {
+        debugger
+      }
+      var valueExpression = tree.get(valueId)
+
+      tree.addKeyPair(objectExpression, key, valueExpression, options)
     }
 
     ExpressionTree.prototype.addKeyPair = function(objectExpression, key, valueExpression, options) {
