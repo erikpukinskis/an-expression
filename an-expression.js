@@ -210,7 +210,7 @@ module.exports = library.export(
         case "parentToAdd":
         case "lineIn":
         case "keys":
-          // ignore
+          // discard these. we add them in javascript-to-ezjs. Ideally we would just not f with expressions at all, and just error if we see these 
           break;
         default:
           throw new Error("should "+attribute+" stay on a dehydrated expression?")
