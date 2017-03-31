@@ -609,9 +609,6 @@ module.exports = library.export(
 
       var tree = anExpression.getTree(treeId)
       var objectExpression = tree.get(objectId)
-      if (!objectExpression) {
-        debugger
-      }
       var valueExpression = tree.get(valueId)
 
       tree.addKeyPair(objectExpression, key, valueExpression, options)
@@ -627,30 +624,11 @@ module.exports = library.export(
         objectExpression.keys = []
       }
       
-      if (options.index) {
-        objectExpression.keys.splice(options.index, 0, key)
-      } else {
-        objectExpression.keys.push(key)
-      }
+      var i = options.index || objectExpression.keys.length
 
-      var pair = {
-        kind: "key pair",
-        key: key,
-        objectExpression: objectExpression,
-        id: options.id
-      }
-
-      var pairIdentifier = objectExpression.id+"/"+key
-
-      this.pairIds[pairIdentifier] = pair.id
-
-      this.expressionsById[pair.id] = pair
-
-      objectExpression.valuesByKey[key] = valueExpression
-
-      this.keyPairsByValueId[valueExpression.id] = pair
-
-      return pair
+      objectExpression.keys.splice(i, 0, key)
+      objectExpression.values.splice(i, 0, valueExpression)
+      objectExpression.pairIds.splice(i, 0, pairId)
     }
 
 

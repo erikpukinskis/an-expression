@@ -76,12 +76,15 @@ module.exports = library.export(
       "object literal": function(expression) {
         var keyPairs = []
 
-        for(var key in expression.valuesByKey) {
+        for(var i=0; i<expression.keys.length; i++) {
+          var key = expression.keys[i]
+          var value = expression.values[i]
+
           keyPairs.push(
             "  "
             +JSON.stringify(key)
             +": "
-            +expressionToJavascript(expression.valuesByKey[key])
+            +expressionToJavascript(value)
           )
         }
         return "{\n"+keyPairs.join(",\n")+"\n}"
