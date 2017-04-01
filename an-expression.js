@@ -5,18 +5,29 @@ module.exports = library.export(
   ["function-call", "./expression-to-javascript"],
   function(functionCall, expressionToJavascript) {
 
-    function anExpression(data) {
-      if (!data) {
-        throw new Error("Passed nothing to anExpression(). Did you mean to make an expression tree? Try var yourTree = anExpression.tree() instead.")
-      } else if (data.expressionIds) {
-        throw new Error("Tried to turn expression tree data into an expression. Try anExpression.tree(yourTreeData) instead.")
+    function anExpression(treeId, index, id, attributes) {
+
+      if (typeof id != "string") {
+        throw new Error("anExpression takes (treeId, index, id, kind, attributes)")
       }
 
-      if (!data.id) {
-        data.id = anId()
+      var tree = anExpression.getTree(treeId)
+
+      if (!tree) {
+        throw new Error("No tree "+treeId+" just "+Object.keys(trees))
       }
 
-      return data
+      var expression = rehydrate(attributes, tree)
+
+      expression.id = id
+
+      if (typeof index == "undefined") {
+        index = tree.reservePosition()
+      }
+
+      tree.addExpressionAt(expression, index)
+
+      return expression
     }
 
     anExpression.tree = function(data) {
@@ -100,7 +111,11 @@ module.exports = library.export(
 
     ExpressionTree.prototype.root = function() {
       var rootId = this.expressionIds[0]
-      return this.expressionsById[rootId]
+      var root = this.expressionsById[rootId]
+      if (!root) {
+        throw new Error(this.id+" has no root expression. ids: "+JSON.stringify(this.expressionIds))
+      }
+      return root
     }
 
     ExpressionTree.prototype.get = function(id) {
@@ -202,7 +217,6 @@ module.exports = library.export(
           }
           break
         case "kind":
-        case "id":
         case "functionName":
         case "argumentNames":
         case "variableName":
@@ -213,6 +227,8 @@ module.exports = library.export(
         case "pairIds":
           dehydrated[attribute] = expression[attribute]
           break;
+        case "id":
+          // this is already in the log calls, so we don't need it in the attributes
         case "i":
         case "parentToAdd":
         case "lineIn":
@@ -403,22 +419,6 @@ module.exports = library.export(
     }
 
 
-    // This adds an expression at a specific place in the array, after we reserved it with reservePosition. It overwrites whatever is there, but we're assuming we already moved the write position:
-
-    anExpression.addAt = function(treeId, i, expressionId, dehydrated) {
-
-      var tree = anExpression.getTree(treeId)
-
-      if (!tree) {
-        throw new Error("No tree "+treeId+" just "+Object.keys(trees))
-      }
-
-      var expression = rehydrate(dehydrated, tree)
-      expression.id = expressionId
-
-      tree.addExpressionAt(expression, i)
-    }
-
     anExpression.add = function(treeId, expressionId, dehydrated) {
       var tree = anExpression.getTree(treeId)
 
@@ -436,39 +436,49 @@ module.exports = library.export(
       this.addExpressionAt(newExpression, i)
     }
 
-    ExpressionTree.prototype.addExpressionAt = function(newExpression, i) {
+    ExpressionTree.prototype.addExpressionAt = function(newExpression, index) {
       
-      this.log("anExpression.addAt", this.id, i, newExpression.id, dehydrate(newExpression))
+      this.log("anExpression", this.id, index, newExpression.id, dehydrate(newExpression))
 
-      this.expressionsById[newExpression.id] = newExpression
+      addToTree(newExpression.id, index, newExpression, this)
+    }
 
-      if (!newExpression.id) {
-        throw new Error("expr "+JSON.stringify(newExpression, null, 2)+" doesn't have an id!")
+    function addToTree(id, index, expression, tree) {
+
+      console.log("Adding", id, "to", tree.id, "at", index)
+      tree.expressionsById[id] = expression
+
+      if (!id) {
+        throw new Error("expr "+JSON.stringify(expression, null, 2)+" doesn't have an id!")
       }
 
-      this.expressionIds[i] = newExpression.id
+      tree.expressionIds[index] = id
+
     }
 
     // This adds more space in the array for a new expression positioned relative to others:
 
 
-    anExpression.addLine = function(treeId, expressionId, functionLiteralId) {
+    anExpression.lineIn = function(functionLiteralId, treeId, index, expressionId, dehydrated) {
 
       var tree = anExpression.getTree(treeId)
-      var functionLiteral = tree.get(functionLiteralId)
-      var expression = tree.get(expressionId)
-      if (!expression) {
-        throw new Error("expression "+expressionId+" isn't in the tree: "+tree.expressionIds)
-      }
 
-      tree.addLine(expression, functionLiteral)
+      var functionLiteral = tree.get(functionLiteralId)
+
+      var expression = rehydrate(dehydrated, tree)
+      expression.id = expressionId
+
+      tree.addLine(expression, index, functionLiteral)
     }
 
-    ExpressionTree.prototype.addLine = function(expression, functionLiteral) {
+    ExpressionTree.prototype.addLine = function(expression, index, functionLiteral) {
 
-      this.log("anExpression.addLine", this.id, expression.id, functionLiteral.id)
+      this.log("anExpression.lineIn", functionLiteral.id, this.id, expression.id, index, dehydrate(expression))
+
+      addToTree(expression.id, index, expression, this)
 
       functionLiteral.body.push(expression)
+
       this.setParent(expression.id, functionLiteral)
     }
 
