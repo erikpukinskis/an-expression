@@ -104,7 +104,6 @@ module.exports = library.export(
 
     function addToTree(id, index, expression, tree) {
 
-      console.log("Adding", id, "to", tree.id, "at", index)
       tree.expressionsById[id] = expression
 
       if (!id) {
