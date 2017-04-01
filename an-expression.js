@@ -5,6 +5,9 @@ module.exports = library.export(
   ["function-call", "./expression-to-javascript"],
   function(functionCall, expressionToJavascript) {
 
+
+    // BUILDING
+
     function anExpression(treeId, index, id, attributes) {
 
       if (typeof id != "string") {
@@ -22,7 +25,7 @@ module.exports = library.export(
       expression.id = id
 
       if (typeof index == "undefined") {
-        index = tree.reservePosition()
+        throw new Error("no index?")
       }
 
       tree.addExpressionAt(expression, index)
@@ -40,33 +43,7 @@ module.exports = library.export(
       return tree
     }
 
-    var lastExpressionInteger = typeof window == "undefined" ? 1000*1000 : 1000
-
-    function anId() {
-      lastExpressionInteger++
-      var id = lastExpressionInteger.toString(36)
-      return "exp"+id
-    }
-
-    // Expression Tree
-
-    var trees = {}
-    var lastTreeId = 300
-
-    anExpression.getTree = function(treeId) {
-      return trees[treeId]
-    }
-
-    anExpression.forgetTrees = function() {
-      trees = {}
-    }
-
-    function aTreeId() {
-      lastTreeId++
-      return "tree"+lastTreeId.toString(36)
-    }
-
-    function ExpressionTree(data) {
+    function ExpressionTree(id) {
       this.expressionIdWritePosition = 0
       this.expressionIds = []
       this.expressionsById = {}
@@ -77,81 +54,217 @@ module.exports = library.export(
       this.getIds = getIds.bind(this)
       this.pairIds = {}
 
-      if (typeof data == "string") {
-        this.id = data
-      } else if (typeof data == "object") {
-        if (!data.expressionIds) {
-          throw new Error("Tried to create an expression tree out of weird stuff: "+data)
-        }
-        this.id = data.id
-        this.load(data)
-      } else {
+      if (typeof id == "string") {
+        this.id = id
+      } else if (typeof id == "undefined") {
         this.id = aTreeId()
+      } else {
+        throw new Error("Can't load tree data anymore. Use tree.logTo(tellTheUniverse) and play it back")
       }
 
       trees[this.id] = this
     }
 
-    anExpression.toJavascript = function(expression) {
-      return expressionToJavascript(expression)
+
+    var lastExpressionInteger = typeof window == "undefined" ? 1000*1000 : 1000
+    function anId() {
+      lastExpressionInteger++
+      var id = lastExpressionInteger.toString(36)
+      return "exp"+id
     }
 
-    ExpressionTree.prototype.logTo = function(universe) {
-      this.universe = universe
-      universe("anExpression.tree", this.id)
+    var trees = {}
+    anExpression.getTree = function(treeId) {
+      return trees[treeId]
     }
 
-    ExpressionTree.prototype.builder = function() {
-      return eval("("+this.universe.source()+")")
+    anExpression.forgetTrees = function() {
+      trees = {}
     }
 
-    ExpressionTree.prototype.asBinding = function() {
-      return functionCall("library.get(\"program\").findById(\""+this.id+"\")").singleton()
+    var lastTreeId = 300
+    function aTreeId() {
+      lastTreeId++
+      return "tree"+lastTreeId.toString(36)
     }
 
-    ExpressionTree.prototype.root = function() {
-      var rootId = this.expressionIds[0]
-      var root = this.expressionsById[rootId]
-      if (!root) {
-        throw new Error(this.id+" has no root expression. ids: "+JSON.stringify(this.expressionIds))
-      }
-      return root
+    ExpressionTree.prototype.reservePosition = function() {
+      var i = 
+      this.expressionIdWritePosition
+      this.expressionIdWritePosition++
+      return i
     }
 
-    ExpressionTree.prototype.get = function(id) {
-      return this.expressionsById[id]
-    }
-
-    ExpressionTree.prototype.getParentOf = function(id) {
-      return this.parentExpressionsByChildId[id]
-    }
-
-    ExpressionTree.prototype.onchanged = function(callback) {
-      this.onchangedCallbacks.push(callback)
-    }
-
-    ExpressionTree.prototype.onnewexpression = function(callback) {
-      this.onnewexpressionCallbacks.push(callback)
-    }
-
-    ExpressionTree.prototype.changed = function() {
+    ExpressionTree.prototype.addExpressionAt = function(newExpression, index) {
       
-      var expression = this.root()
+      this.log("anExpression", this.id, index, newExpression.id, dehydrate(newExpression))
 
-      this.onchangedCallbacks.forEach(function(callback) {
-        callback(expression)
-      })
+      addToTree(newExpression.id, index, newExpression, this)
     }
 
-    ExpressionTree.prototype.newexpression =
-      function(parent, newExpression) {
-        this.onnewexpressionCallbacks.forEach(function(callback) {
+    function addToTree(id, index, expression, tree) {
 
-          callback(parent, newExpression)
-        })
+      console.log("Adding", id, "to", tree.id, "at", index)
+      tree.expressionsById[id] = expression
+
+      if (!id) {
+        throw new Error("expr "+JSON.stringify(expression, null, 2)+" doesn't have an id!")
       }
 
-    function call(func) { func() }
+      tree.expressionIds[index] = id
+
+    }
+
+    anExpression.lineIn = function(functionLiteralId, treeId, index, expressionId, dehydrated) {
+
+      var tree = anExpression.getTree(treeId)
+
+      var functionLiteral = tree.get(functionLiteralId)
+
+      var expression = rehydrate(dehydrated, tree)
+      expression.id = expressionId
+
+      tree.addLine(expression, index, functionLiteral)
+    }
+
+    ExpressionTree.prototype.addLine = function(expression, index, functionLiteral) {
+
+      this.log("anExpression.lineIn", functionLiteral.id, this.id, expression.id, index, dehydrate(expression))
+
+      addToTree(expression.id, index, expression, this)
+
+      functionLiteral.body.push(expression)
+
+      this.setParent(expression.id, functionLiteral)
+    }
+
+    ExpressionTree.prototype.insertExpression = function(newExpression, relationship, relativeToThisId) {
+      
+      throw new Error("impl")
+
+      var parentExpression = this.getParentOf(relativeToThisId)
+
+      var relativeExpression = this.get(relativeToThisId)
+
+      addExpressionToNeighbors(
+        newExpression,
+        parentExpression.body,
+        relationship,
+        relativeExpression
+      )
+
+      if (relationship == "before") {
+
+        var splicePosition = indexBefore(this, relativeToThisId)
+        var deleteThisMany = 0
+
+      } else if (relationship == "after") {
+
+        var splicePosition = indexAfter(this, relativeToThisId)
+        var deleteThisMany = 0
+
+      } else if (relationship == "inPlaceOf") {
+
+        var splicePosition = 0
+        var deleteThisMany = 1
+
+      } else { throw new Error() }
+
+
+      this.parentExpressionsByChildId[newExpression.id] = parentExpression
+
+      var d = 1 - deleteThisMany
+
+      this.expressionIdWritePosition += d
+
+      this.expressionIds.splice(splicePosition, deleteThisMany, newExpression.id)
+    }
+
+    function addExpressionToNeighbors(newExpression, neighbors, relationship, relativeExpression) {
+      
+      for(var i = 0; i < neighbors.length; i++) {
+        var neighborExpression = neighbors[i]
+
+        if (neighborExpression == relativeExpression) {
+
+          lineIndex = i
+
+          if (relationship == "after") {
+            lineIndex++
+          }
+
+          break
+        }
+      }
+
+      if (relationship == "inPlaceOf") {
+        var deleteThisMany = 1
+      } else {
+        var deleteThisMany = 0
+      }
+
+      neighbors.splice(lineIndex, deleteThisMany,  newExpression)
+    }
+
+    function lastDescendantAfter(tree, ids, startIndex) {
+
+      var possibleParentIds = [ids[startIndex]]
+      var lastDescendant = startIndex
+
+      for(var i = startIndex+1; i < ids.length; i++) {
+
+        var testId = ids[i]
+        var testExpr = tree.expressionsById[testId]
+
+        var testParent = tree.parentExpressionsByChildId[testId]
+
+        if (!testParent) {
+          var isDescendant = false
+        } else {
+          var testParentId = testParent.elementId
+          var isDescendant = contains(possibleParentIds, testParent.elementId)
+        }
+
+        if (isDescendant) {
+          possibleParentIds.push(testId)
+          lastDescendant = i
+        } else {
+          return lastDescendant
+        }      
+      }
+
+      return lastDescendant
+    }
+
+    function indexBefore(tree, relativeId) {
+
+      var ids = tree.expressionIds
+
+      for(var i = 0; i < ids.length; i++) {
+        if (ids[i] == relativeId) {
+          return i
+        }
+      }
+
+      throw new Error("Wanted to insert before "+relativeId+" but I can't find it!")
+
+    }
+
+    function indexAfter(tree, relativeId) {
+
+      var ids = tree.expressionIds
+      var parentIdStack = []
+
+      for(var i = 0; i < ids.length; i++) {
+        var testId = ids[i]
+
+        if (testId == relativeId) {
+          return lastDescendantAfter(tree, ids, i)+1
+        }
+      }
+
+      throw new Error("Wanted to insert after "+relativeId+" but I can't find it!")
+    }
 
     function dehydrate(expression) {
       var dehydrated = {}
@@ -159,33 +272,6 @@ module.exports = library.export(
         dryCopy(key, expression, dehydrated)
       }
       return dehydrated
-    }
-
-    ExpressionTree.prototype.data = function() {
-      var parents = {}
-      var dehydratedById = {}
-      var tree = this
-
-      this.expressionIds.forEach(function(id) {
-
-        var expression = tree.expressionsById[id]
-        var parent = tree.parentExpressionsByChildId[id]
-
-        if (parent) {
-          parents[id] = parent.id
-        }
-
-        dehydratedById[id] = dehydrate(expression)
-      })
-
-      return {
-        id: this.id,
-        expressionIds: this.expressionIds,
-        expressionsById: dehydratedById,
-        keyPairsByValueId: null,
-        parents: parents,
-        pairIds: this.pairIds
-      }
     }
 
     function dryCopy(attribute, expression, dehydrated) {
@@ -278,40 +364,6 @@ module.exports = library.export(
       }
     }
 
-    ExpressionTree.prototype.load = function(data) {
-
-      this.expressionIds = data.expressionIds
-
-      if (!data.expressionIds) {
-        debugger
-      }
-
-      this.expressionIdWritePosition = data.expressionIds.length
-
-      this.pairIds = data.pairIds
-
-      this.expressionsById = data.expressionsById
-
-      this.keyPairsByValueId
-
-      this.parentExpressionsByChildId = {}
-
-      var tree = this
-
-      this.expressionIds.forEach(function(id) {
-
-        var dehydrated = tree.expressionsById[id]
-
-        rehydrate(dehydrated, tree)
-
-        var parentId = data.parents[id]
-
-        if (parentId) {
-          tree.parentExpressionsByChildId[id] = tree.expressionsById[parentId]
-        }
-      }) 
-    }
-
     function rehydrate(dehydrated, tree) {
       for(var attribute in dehydrated) {
         wetCopy(attribute, dehydrated, tree)
@@ -328,8 +380,89 @@ module.exports = library.export(
       return dehydrated
     }
 
-    function getIds() {
-      return this.expressionIds
+
+
+    // EVENTS
+
+    ExpressionTree.prototype.onchanged = function(callback) {
+      this.onchangedCallbacks.push(callback)
+    }
+
+    ExpressionTree.prototype.onnewexpression = function(callback) {
+      this.onnewexpressionCallbacks.push(callback)
+    }
+
+    ExpressionTree.prototype.changed = function() {
+      
+      var expression = this.root()
+
+      this.onchangedCallbacks.forEach(function(callback) {
+        callback(expression)
+      })
+    }
+
+    ExpressionTree.prototype.newexpression =
+      function(parent, newExpression) {
+        this.onnewexpressionCallbacks.forEach(function(callback) {
+
+          callback(parent, newExpression)
+        })
+      }
+
+
+
+    // QUERYING
+
+    anExpression.toJavascript = function(expression) {
+      return expressionToJavascript(expression)
+    }
+
+    ExpressionTree.prototype.logTo = function(universe) {
+      this.universe = universe
+      universe("anExpression.tree", this.id)
+    }
+
+    ExpressionTree.prototype.log = function(method, args, etc) {
+      var universe = this.universe
+      if (!universe) { return }
+      var args = Array.prototype.slice.call(arguments)
+
+      universe.apply(null, args)
+    }
+
+    ExpressionTree.prototype.builder = function() {
+      return eval("("+this.universe.source()+")")
+    }
+
+    ExpressionTree.prototype.asBinding = function() {
+      return functionCall("library.get(\"program\").findById(\""+this.id+"\")").singleton()
+    }
+
+    ExpressionTree.prototype.root = function() {
+      var rootId = this.expressionIds[0]
+      var root = this.expressionsById[rootId]
+      if (!root) {
+        throw new Error(this.id+" has no root expression. ids: "+JSON.stringify(this.expressionIds))
+      }
+      return root
+    }
+
+    ExpressionTree.prototype.get = function(id) {
+      return this.expressionsById[id]
+    }
+
+    ExpressionTree.prototype.getParentOf = function(id) {
+      return this.parentExpressionsByChildId[id]
+    }
+
+    ExpressionTree.prototype.setParent = function(childId, parent) {
+      this.parentExpressionsByChildId[childId] = parent
+    }
+
+    ExpressionTree.prototype.getArgumentName = function(expressionId, index) {
+      var expression = this.expressionsById[expressionId]
+
+      return expression.argumentNames[index]
     }
 
     ExpressionTree.prototype.getProperty = function(property, expressionId) {
@@ -372,25 +505,6 @@ module.exports = library.export(
       this.changed()
     }
 
-    ExpressionTree.prototype.getArgumentName = function(expressionId, index) {
-      var expression = this.expressionsById[expressionId]
-
-      return expression.argumentNames[index]
-    }
-
-    ExpressionTree.prototype.getPairForValueId = function(valueExpressionId) {
-      return this.keyPairsByValueId[valueExpressionId]
-    }
-
-    ExpressionTree.prototype.renameArgument = function(expressionId, index, newName) {
-      throw new Error("implement log")
-      var expression = this.expressionsById[expressionId]
-
-      expression.argumentNames[index] = newName
-
-      this.changed()
-    }
-
     ExpressionTree.prototype.addFunctionArgument = function(expressionId, name) {
       throw new Error("implement log")
 
@@ -401,218 +515,6 @@ module.exports = library.export(
       functionExpression.argumentNames.push(name)
 
       return index
-    }
-
-    ExpressionTree.prototype.reservePosition = function() {
-      var i = 
-      this.expressionIdWritePosition
-      this.expressionIdWritePosition++
-      return i
-    }
-
-    ExpressionTree.prototype.log = function(method, args, etc) {
-      var universe = this.universe
-      if (!universe) { return }
-      var args = Array.prototype.slice.call(arguments)
-
-      universe.apply(null, args)
-    }
-
-
-    anExpression.add = function(treeId, expressionId, dehydrated) {
-      var tree = anExpression.getTree(treeId)
-
-      var expression = rehydrate(dehydrated, tree)
-
-      expression.id = expressionId
-
-      var i = tree.reservePosition()
-
-      tree.addExpressionAt(expression, i)
-    }
-
-    ExpressionTree.prototype.addExpression = function(newExpression) {
-      var i = this.reservePosition()
-      this.addExpressionAt(newExpression, i)
-    }
-
-    ExpressionTree.prototype.addExpressionAt = function(newExpression, index) {
-      
-      this.log("anExpression", this.id, index, newExpression.id, dehydrate(newExpression))
-
-      addToTree(newExpression.id, index, newExpression, this)
-    }
-
-    function addToTree(id, index, expression, tree) {
-
-      console.log("Adding", id, "to", tree.id, "at", index)
-      tree.expressionsById[id] = expression
-
-      if (!id) {
-        throw new Error("expr "+JSON.stringify(expression, null, 2)+" doesn't have an id!")
-      }
-
-      tree.expressionIds[index] = id
-
-    }
-
-    // This adds more space in the array for a new expression positioned relative to others:
-
-
-    anExpression.lineIn = function(functionLiteralId, treeId, index, expressionId, dehydrated) {
-
-      var tree = anExpression.getTree(treeId)
-
-      var functionLiteral = tree.get(functionLiteralId)
-
-      var expression = rehydrate(dehydrated, tree)
-      expression.id = expressionId
-
-      tree.addLine(expression, index, functionLiteral)
-    }
-
-    ExpressionTree.prototype.addLine = function(expression, index, functionLiteral) {
-
-      this.log("anExpression.lineIn", functionLiteral.id, this.id, expression.id, index, dehydrate(expression))
-
-      addToTree(expression.id, index, expression, this)
-
-      functionLiteral.body.push(expression)
-
-      this.setParent(expression.id, functionLiteral)
-    }
-
-    ExpressionTree.prototype.insertExpression = function(newExpression, relationship, relativeToThisId) {
-      
-      throw new Error("impl")
-
-      var parentExpression = this.getParentOf(relativeToThisId)
-
-      var relativeExpression = this.get(relativeToThisId)
-
-      addExpressionToNeighbors(
-        newExpression,
-        parentExpression.body,
-        relationship,
-        relativeExpression
-      )
-
-      if (relationship == "before") {
-
-        var splicePosition = indexBefore(this, relativeToThisId)
-        var deleteThisMany = 0
-
-      } else if (relationship == "after") {
-
-        var splicePosition = indexAfter(this, relativeToThisId)
-        var deleteThisMany = 0
-
-      } else if (relationship == "inPlaceOf") {
-
-        var splicePosition = 0
-        var deleteThisMany = 1
-
-      } else { throw new Error() }
-
-
-      this.parentExpressionsByChildId[newExpression.id] = parentExpression
-
-      var d = 1 - deleteThisMany
-
-      this.expressionIdWritePosition += d
-
-      this.expressionIds.splice(splicePosition, deleteThisMany, newExpression.id)
-    }
-
-
-    function addExpressionToNeighbors(newExpression, neighbors, relationship, relativeExpression) {
-      
-      for(var i = 0; i < neighbors.length; i++) {
-        var neighborExpression = neighbors[i]
-
-        if (neighborExpression == relativeExpression) {
-
-          lineIndex = i
-
-          if (relationship == "after") {
-            lineIndex++
-          }
-
-          break
-        }
-      }
-
-      if (relationship == "inPlaceOf") {
-        var deleteThisMany = 1
-      } else {
-        var deleteThisMany = 0
-      }
-
-      neighbors.splice(lineIndex, deleteThisMany,  newExpression)
-    }
-
-    function lastDescendantAfter(tree, ids, startIndex) {
-
-      var possibleParentIds = [ids[startIndex]]
-      var lastDescendant = startIndex
-
-      for(var i = startIndex+1; i < ids.length; i++) {
-
-        var testId = ids[i]
-        var testExpr = tree.expressionsById[testId]
-
-        var testParent = tree.parentExpressionsByChildId[testId]
-
-        if (!testParent) {
-          var isDescendant = false
-        } else {
-          var testParentId = testParent.elementId
-          var isDescendant = contains(possibleParentIds, testParent.elementId)
-        }
-
-        if (isDescendant) {
-          possibleParentIds.push(testId)
-          lastDescendant = i
-        } else {
-          return lastDescendant
-        }      
-      }
-
-      return lastDescendant
-    }
-
-    function indexBefore(tree, relativeId) {
-
-      var ids = tree.expressionIds
-
-      for(var i = 0; i < ids.length; i++) {
-        if (ids[i] == relativeId) {
-          return i
-        }
-      }
-
-      throw new Error("Wanted to insert before "+relativeId+" but I can't find it!")
-
-    }
-
-    function indexAfter(tree, relativeId) {
-
-      var ids = tree.expressionIds
-      var parentIdStack = []
-
-      for(var i = 0; i < ids.length; i++) {
-        var testId = ids[i]
-
-        if (testId == relativeId) {
-          return lastDescendantAfter(tree, ids, i)+1
-        }
-      }
-
-      throw new Error("Wanted to insert after "+relativeId+" but I can't find it!")
-    }
-
-    ExpressionTree.prototype.setParent = function(childId, parent) {
-      this.parentExpressionsByChildId[childId] = parent
     }
 
     anExpression.addKeyPair = function(treeId, objectId, key, valueId, options) {
@@ -641,7 +543,6 @@ module.exports = library.export(
       objectExpression.pairIds.splice(i, 0, pairId)
     }
 
-
     ExpressionTree.prototype.setKeyValue = function(pairExpression, newExpression) {
 
       var key = pairExpression.key
@@ -667,8 +568,26 @@ module.exports = library.export(
 
     }
 
+    ExpressionTree.prototype.getPairForValueId = function(valueExpressionId) {
+      return this.keyPairsByValueId[valueExpressionId]
+    }
 
-    // Expression generators
+    ExpressionTree.prototype.renameArgument = function(expressionId, index, newName) {
+      throw new Error("implement log")
+      var expression = this.expressionsById[expressionId]
+
+      expression.argumentNames[index] = newName
+
+      this.changed()
+    }
+
+    function getIds() {
+      return this.expressionIds
+    }
+
+
+
+    // GENERATORS
 
     anExpression.id = anId
 
