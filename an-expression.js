@@ -5,7 +5,6 @@ module.exports = library.export(
   ["function-call", "./expression-to-javascript"],
   function(functionCall, expressionToJavascript) {
 
-
     // BUILDING
 
     function anExpression(treeId, index, id, attributes) {
@@ -599,6 +598,15 @@ module.exports = library.export(
         }
       }
 
+    anExpression.functionLiteral = function(attributes) {
+      return {
+        kind: "function literal",
+        id: anId(),
+        functionName: attributes.functionName,
+        body: attributes.body,
+      }
+    }
+
     anExpression.numberLiteral =
       function(number) {
         return {
@@ -615,6 +623,24 @@ module.exports = library.export(
           id: anId(),
         }
       }
+
+    anExpression.functionCall = function(attributes) {
+      return {
+        kind: "function call",
+        id: anId(),
+        arguments: attributes.arguments,
+        functionName: attributes.functionName,
+      }
+    }
+
+    anExpression.variableAssignment = function(attributes) {
+      return {
+        kind: "variable assignment",
+        id: anId(),
+        expression: attributes.expression,
+        variableName: attributes.variableName
+      }
+    }
 
     anExpression.objectLiteral =
       function(object) {
