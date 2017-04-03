@@ -111,6 +111,11 @@ module.exports = library.export(
 
       tree.expressionIds[index] = id
 
+      if (expression.kind == "array literal") {
+        expression.items.forEach(function(item) {
+          item.role = "array item"
+        })
+      }
     }
 
     anExpression.lineIn = function(functionLiteralId, treeId, index, expressionId, dehydrated) {
@@ -127,7 +132,9 @@ module.exports = library.export(
 
     ExpressionTree.prototype.addLine = function(expression, index, functionLiteral) {
 
-      this.log("anExpression.lineIn", functionLiteral.id, this.id, expression.id, index, dehydrate(expression))
+      this.log("anExpression.lineIn", functionLiteral.id, this.id, index, expression.id, dehydrate(expression))
+
+      expression.role = "function literal line"
 
       addToTree(expression.id, index, expression, this)
 
@@ -138,8 +145,6 @@ module.exports = library.export(
 
     ExpressionTree.prototype.insertExpression = function(newExpression, relationship, relativeToThisId) {
       
-      throw new Error("impl")
-
       var parentExpression = this.getParentOf(relativeToThisId)
 
       var relativeExpression = this.get(relativeToThisId)
@@ -176,6 +181,8 @@ module.exports = library.export(
       this.expressionIdWritePosition += d
 
       this.expressionIds.splice(splicePosition, deleteThisMany, newExpression.id)
+
+      addToTree(newExpression.id, splicePosition, newExpression, this)
     }
 
     function addExpressionToNeighbors(newExpression, neighbors, relationship, relativeExpression) {
