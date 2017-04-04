@@ -424,7 +424,6 @@ module.exports = library.export(
 
     ExpressionTree.prototype.logTo = function(universe) {
       this.universe = universe
-      universe("anExpression.tree", this.id)
     }
 
     ExpressionTree.prototype.log = function(method, args, etc) {
