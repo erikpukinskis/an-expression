@@ -474,8 +474,15 @@ module.exports = library.export(
       return expression[property]
     }
 
+    anExpression.setProperty = function(treeId, expressionId, property, newValue) {
+      var tree = anExpression.getTree(treeId)
+      tree.setProperty(expressionId, property, newValue)
+    }
+
     ExpressionTree.prototype.setProperty = function(property, expressionId, newValue) {
-      throw new Error("implement log")
+
+      this.log("anExpression.setProperty", this.id, expressionId, property, newValue)
+
       var expression = this.expressionsById[expressionId]
       expression[property] = newValue
       this.changed()
