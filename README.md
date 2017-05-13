@@ -1,6 +1,6 @@
 **anExpression** lets you programmatically build JavaScript expressions, modifemy them, and then turn them into source code.
 
-## Builders
+### Builders
 
 Build a function call:
 
@@ -41,7 +41,7 @@ var returnTrue = {
 }
 ```
 
-## Expression tree
+### Expression tree
 
 An expression tree keeps track of all of the expressions within a parent expression. It keeps references to every expression, key-value, etc, as well as indexes for fast lookups of expressions and methods for modifying the tree.
 
@@ -66,7 +66,7 @@ You can get a list of expressions if you want to iterate through them all:
 var ids = tree.getIds()
 ```
 
-## Getting source code
+### Getting source code
 
 Once you're done, you can get the source code for the tree:
 
@@ -80,7 +80,7 @@ Which is equivalent to:
 anExpression.toJavascript(imaginary)
 ```
 
-## Rebuilding
+### Rebuilding
 
 If you want to be able to rebuild the tree with all of its modifications, you can log the tree to a universe:
 
