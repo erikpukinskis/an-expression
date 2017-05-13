@@ -92,6 +92,13 @@ module.exports = library.export(
       "return statement": function(expression) {
         return "return "+expressionToJavascript(expression.expression)
       },
+      "boolean": function(expression) {
+        if (expression.value) {
+          return "true"
+        } else {
+          return "false"
+        }
+      }
     }
 
     // expressionToJavascript.kinds = Object.keys(codeGenerators)

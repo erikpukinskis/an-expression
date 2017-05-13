@@ -64,7 +64,6 @@ module.exports = library.export(
       trees[this.id] = this
     }
 
-
     var lastExpressionInteger = typeof window == "undefined" ? 1000*1000 : 1000
     function anId() {
       lastExpressionInteger++
@@ -92,6 +91,10 @@ module.exports = library.export(
       this.expressionIdWritePosition
       this.expressionIdWritePosition++
       return i
+    }
+
+    ExpressionTree.prototype.fork = function() {
+      return this
     }
 
     ExpressionTree.prototype.addExpressionAt = function(newExpression, index) {
@@ -288,6 +291,10 @@ module.exports = library.export(
         return x.id
       }
 
+      if (typeof expression[attribute] == "undefined") {
+        throw new Error(attribute+" attribute on expression "+expression+" is undefined wtf?")
+      }
+
       switch(attribute) {
         case "body":
         case "arguments":
@@ -316,6 +323,7 @@ module.exports = library.export(
         case "isDeclaration":
         case "keys":
         case "pairIds":
+        case "value":
           dehydrated[attribute] = expression[attribute]
           break;
         case "id":
@@ -616,7 +624,8 @@ module.exports = library.export(
         kind: "function literal",
         id: anId(),
         functionName: attributes.functionName,
-        body: attributes.body,
+        argumentNames: attributes.argumentNames||[],
+        body: attributes.body||[],
       }
     }
 
@@ -684,6 +693,22 @@ module.exports = library.export(
           id: anId(),
         }
       }
+
+    anExpression.true = function() {
+      return {
+        kind: "boolean",
+        value: true,
+        id: anId(),
+      }
+    }
+
+    anExpression.false = function() {
+      return {
+        kind: "boolean",
+        value: false,
+        id: anId(),
+      }
+    }
 
     function toExpression(stuff) {
       if (typeof stuff == "string") {
