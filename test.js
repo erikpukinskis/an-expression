@@ -9,15 +9,17 @@ runTest(
 
     var func = anExpression.functionLiteral({functionName: "whatev"})
 
-    orig.addExpressionAt(func, 0)
+    orig.addExpressionAt(func, orig.reservePosition())
 
-    orig.addLine(anExpression.true(), 1, func)
+    orig.addLine(anExpression.true(), orig.reservePosition(), func)
 
     var fork = orig.fork()
 
-    fork.addLine(anExpression.false(), 1, func)
+    debugger
 
-    orig.addLine(anExpression.true(), 1, func)
+    fork.addLine(anExpression.false(), fork.reservePosition(), func)
+
+    orig.addLine(anExpression.true(), orig.reservePosition(), func)
 
     var trueTrue = anExpression.toJavascript(orig.root())
 
@@ -25,6 +27,8 @@ runTest(
   true
   true
 }.toString())
+
+    done.ish("original program looks good")
 
     var falseFalse = anExpression.toJavascript(fork.root())
 

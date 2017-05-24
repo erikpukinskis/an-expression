@@ -1,4 +1,4 @@
-**anExpression** lets you programmatically build JavaScript expressions, modifemy them, and then turn them into source code.
+**anExpression** lets you programmatically build JavaScript expressions, modify them, and then turn them into source code.
 
 ### Builders
 

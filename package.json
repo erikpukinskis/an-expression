@@ -5,7 +5,8 @@
   "main": "an-expression.js",
   "dependencies": {
     "module-library": "*",
-    "function-call": "*"
+    "function-call": "*",
+    "forkable-list": "*"
   },
   "devDependencies": {
     "run-test": "*"
