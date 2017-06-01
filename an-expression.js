@@ -9,6 +9,8 @@ module.exports = library.export(
 
     function anExpression(treeId, index, id, attributes) {
 
+      throw new Error("broken")
+
       if (typeof id != "string") {
         throw new Error("anExpression takes (treeId, index, id, kind, attributes)")
       }
@@ -43,11 +45,9 @@ module.exports = library.export(
     }
 
     function ExpressionTree(id) {
-      this.expressionIdWritePosition = 0
       this.expressionIds = forkableList()
-      this.expressionsById = {}
-      this.keyPairsByValueId = {}
-      this.parentExpressionsByChildId = {}
+      this.pairIdsByValueId = {}
+      this.parentIdsByChildId = {}
       this.onchangedCallbacks = []
       this.onnewexpressionCallbacks = []
       this.getIds = getIds.bind(this)
@@ -91,10 +91,7 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.next = function() {
-      var i = 
-      this.expressionIdWritePosition
-      this.expressionIdWritePosition++
-      return i
+      return this.expressionIds.next()
     }
 
     ExpressionTree.prototype.fork = function() {
@@ -126,13 +123,40 @@ module.exports = library.export(
 
     function addToTree(id, index, expression, tree) {
 
-      tree.expressionsById[id] = expression
+      throw new Error("index body, arguments, etc here:")
+
+      // addKeyPair: 
+      // tree.parentIdsByChildId[oldId] = null
+      // this.pairIdsByValueId[oldId] = null
+      // this.valueIdsByPairId[oldId] = null
+
+
+        // case "body":
+        // case "arguments":
+        // case "items":
+        // case "values":
+        //   forkableList
+        // case "expression":
+        //   id
+        // case "kind":
+        // case "functionName":
+        // case "argumentNames":
+        // case "variableName":
+        // case "string":
+        // case "number":
+        // case "isDeclaration":
+        // case "keys":
+        // case "pairIds":
+        // case "value":
+        //   attributesByExpressionId
+
 
       if (!id) {
         throw new Error("expr "+JSON.stringify(expression, null, 2)+" doesn't have an id!")
       }
 
       tree.expressionIds.set(index, id)
+
 
       if (expression.kind == "array literal") {
         expression.items.forEach(function(item) {
@@ -168,16 +192,9 @@ module.exports = library.export(
 
     ExpressionTree.prototype.insertExpression = function(newExpression, relationship, relativeToThisId) {
       
-      var parentExpression = this.getParentOf(relativeToThisId)
+      var parentId = this.getParentId(relativeToThisId)
 
       var relativeExpression = this.get(relativeToThisId)
-
-      addExpressionToNeighbors(
-        newExpression,
-        parentExpression.body,
-        relationship,
-        relativeExpression
-      )
 
       if (relationship == "before") {
 
@@ -197,13 +214,15 @@ module.exports = library.export(
       } else { throw new Error() }
 
 
-      this.parentExpressionsByChildId[newExpression.id] = parentExpression
-
-      var d = 1 - deleteThisMany
-
-      this.expressionIdWritePosition += d
+      this.parentIdsByChildId[newExpression.id] = parentId
 
       this.expressionIds.splice(splicePosition, deleteThisMany, newExpression.id)
+
+      var body = this.getList("body", parentId)
+      
+      throw new Error("need to splice body")
+
+      throw new Error("do we need to pass splicePosition below? we're splicing above.")
 
       addToTree(newExpression.id, splicePosition, newExpression, this)
     }
@@ -244,13 +263,12 @@ module.exports = library.export(
         var testId = ids.get(i)
         var testExpr = tree.get(testId)
 
-        var testParent = tree.getParentOf(testId)
+        var testParentId = tree.getParentId(testId)
 
-        if (!testParent) {
+        if (!testParentId) {
           var isDescendant = false
         } else {
-          var testParentId = testParent.elementId
-          var isDescendant = contains(possibleParentIds, testParent.elementId)
+          var isDescendant = contains(possibleParentIds, testParentId)
         }
 
         if (isDescendant) {
@@ -304,115 +322,15 @@ module.exports = library.export(
     }
 
     function dryCopy(attribute, expression, dehydrated) {
-
-      function toId(x) {
-        if (!x) {
-          throw new Error("Tried to get an id while dry copying the \""+attribute+"\" attribute on "+JSON.stringify(expression)+" is something undefined or null there?")
-        }
-        return x.id
-      }
-
-      if (typeof expression[attribute] == "undefined") {
-        throw new Error(attribute+" attribute on expression "+expression+" is undefined wtf?")
-      }
-
-      switch(attribute) {
-        case "body":
-        case "arguments":
-        case "items":
-        case "values":
-          dehydrated[attribute] = expression[attribute].map(toId)
-          break
-        case "expression":
-          if (!expression[attribute]) {
-            throw new Error("expression "+JSON.stringify(expression).slice(0,100)+"'s \""+attribute+"\" attribute is falsy")
-          }
-          dehydrated[attribute] = toId(expression[attribute])
-          break
-        case "valuesByKey":
-          dehydrated[attribute] = {}
-          for(var key in expression.valuesByKey) {
-            dehydrated[attribute][key] = toId(expression[attribute][key])
-          }
-          break
-        case "kind":
-        case "functionName":
-        case "argumentNames":
-        case "variableName":
-        case "string":
-        case "number":
-        case "isDeclaration":
-        case "keys":
-        case "pairIds":
-        case "value":
-          dehydrated[attribute] = expression[attribute]
-          break;
-        case "id":
-          // this is already in the log calls, so we don't need it in the attributes
-        case "i":
-        case "parentToAdd":
-        case "lineIn":
-        case "keys":
-          // discard these. we add them in javascript-to-ezjs. Ideally we would just not f with expressions at all, and just error if we see these 
-        case "role":
-          // and this one is added by render-expression
-          break;
-        default:
-          console.log(JSON.stringify(expression, null, 2))
-          throw new Error("should "+attribute+" stay on a dehydrated expression?")
-      }
+      throw new Error("deprecated")
     }
 
     function wetCopy(attribute, dehydrated, tree) {
-
-      function toExpression(id) {
-        return tree.get(id)
-      }
-
-      switch(attribute) {
-        case "body":
-        case "arguments":
-        case "items":
-        case "values":
-          dehydrated[attribute] = dehydrated[attribute].map(toExpression)
-          break
-        case "expression":
-          dehydrated[attribute] = toExpression(dehydrated[attribute])
-          break
-        case "valuesByKey":
-          var objectExpression = dehydrated
-          var valueIds = dehydrated.valuesByKey
-          objectExpression.valuesByKey = {}
-
-          for(var key in valueIds) {
-
-            var pairId = tree.pairIds[objectExpression.id+"/"+key]
-
-            tree.addKeyPair(
-              objectExpression,
-              key,
-              tree.get(valueIds[key]),
-              {id: pairId}
-            )
-          }
-          break
-      }
+      throw new Error("deprecated")
     }
 
     function rehydrate(dehydrated, tree) {
-      for(var attribute in dehydrated) {
-        wetCopy(attribute, dehydrated, tree)
-      }
-
-      var kind = dehydrated.kind
-
-      if (kind == "function literal") {
-        if (!dehydrated.body) {
-          dehydrated.body = []
-        }
-      }
-
-      return dehydrated
+      throw new Error("deprecated")
     }
 
 
@@ -482,41 +400,15 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.get = function(id) {
-      var expression = this.expressionsById[id]
-
-      if (!expression && this.parent) {
-        expression = this.parent.get(id)
-      }
-
-      return expression
+      throw new Error("deprecated")
     }
 
     ExpressionTree.prototype.getPairForValueId = function(valueExpressionId) {
-      var pair = this.keyPairsByValueId[valueExpressionId]
-
-      if (!pair && this.parent) {
-        pair = this.parent.getPairForValueId(valueExpressionId)
-      }
-
-      if (pair.deleted) {
-        return
-      } else {
-        return pair
-      }
+      throw new Error("deprecated")
     }
     
-    ExpressionTree.prototype.getParentOf = function(id) {
-      var parentExpression = this.parentExpressionsByChildId[id]
-
-      if (!parentExpression && this.parent) {
-        parentExpression = this.parent.getParentOf(id)
-      }
-
-      if (parentExpression.deleted) {
-        return
-      } else {
-        return parentExpression
-      }
+    ExpressionTree.prototype.getParentId = function(childId) {
+      return getFromFamily(this, "parentIdsByChildId", childId)
     } 
 
     ExpressionTree.prototype.setParent = function(childId, parent) {
@@ -543,7 +435,7 @@ module.exports = library.export(
 
       this.log("anExpression.setProperty", this.id, expressionId, property, newValue)
 
-      var expression = this.get(expressionId
+      var expression = this.get(expressionId)
       expression[property] = newValue
       this.changed()
     }
@@ -555,25 +447,14 @@ module.exports = library.export(
       this.changed()
     }
 
-    ExpressionTree.prototype.getKeyName = function(id) {
-      var pairExpression = this.get(id)
-      return pairExpression.key
+    ExpressionTree.prototype.getKeyName = function(pairId) {
+      return keysByPairId[pairId]
     }
 
     ExpressionTree.prototype.onKeyRename = function(pairId, newKey) {
-      var pairExpression = this.get(pairId)
-      var object = pairExpression.objectExpression.valuesByKey
-      var oldKey = pairExpression.key
 
-      pairExpression.key = newKey
-      object[newKey] = object[oldKey]
+      this.keysByPairId[pairId] = newKey
 
-      var baseId = pairExpression.objectExpression.id
-      this.pairIds[baseId+"/"+oldKey] = undefined
-      this.pairIds[baseId+"/"+newKey] = pairId
-
-      throw new Error("expressions are immutable now")
-      delete object[oldKey]
       this.changed()
     }
 
@@ -590,56 +471,73 @@ module.exports = library.export(
     }
 
     anExpression.addKeyPair = function(treeId, objectId, key, valueId, options) {
-
       var tree = anExpression.getTree(treeId)
-      var objectExpression = tree.get(objectId)
-      var valueExpression = tree.get(valueId)
-
-      tree.addKeyPair(objectExpression, key, valueExpression, options)
+      tree.addKeyPair(objectId, key, valueId, options)
     }
 
-    ExpressionTree.prototype.addKeyPair = function(objectExpression, key, valueExpression, options) {
+    ExpressionTree.prototype.addKeyPair = function(objectId, key, valueId, options) {
 
-      this.log("anExpression.addKeyPair", this.id, objectExpression.id, key, valueExpression.id, options)
+      this.log("anExpression.addKeyPair", this.id, objectId, key, valueId, options)
 
-      if (!options) { options = {} }
+      var pairId = anExpression.id()
 
-      if (!objectExpression.keys) {
-        objectExpression.keys = []
-      }
-      
-      var i = options.index || objectExpression.keys.length
+      this.keysByPairId[pairId] = key
 
-      objectExpression.keys.splice(i, 0, key)
-      objectExpression.values.splice(i, 0, valueExpression)
-      objectExpression.pairIds.splice(i, 0, pairId)
+      tree.parentIdsByChildId[valueId] = objectId
+      this.pairIdsByValueId[valueId] = pairId
+      this.valueIdsByPairId[pairId] = valueId
+
+      var pairs = this.getList("pairs", objectId)
+
+      var i = options.index || pairs.length
+
+      pairs.splice(i, 0, pairId)
     }
 
     var DELETED = {deleted: true}
 
-    ExpressionTree.prototype.setKeyValue = function(pairExpression, newExpression) {
+    ExpressionTree.prototype.setKeyValue = function(pairId, newValueId) {
 
-      var key = pairExpression.key
-
-      var objectExpression = pairExpression.objectExpression
-
-      var oldExpression = objectExpression.valuesByKey[key]
-
-      objectExpression.valuesByKey[key] = newExpression
-
-      newExpression.key = key
-
-      if (oldExpression.id != newExpression.id) {
-
-        tree.parentExpressionsByChildId[oldExpression.id] = DELETED
-
-        tree.keyPairsByValueId[oldExpression.id] = DELETED
+      if (typeof pairId == "object" || typeof newValueId == "object") {
+        throw new Error("setKeyValue takes ids")
       }
 
-      this.parentExpressionsByChildId[newExpression.id] = pairExpression.objectExpression
+      // var key = pairExpression.key
 
-      this.keyPairsByValueId[newExpression.id] = pairExpression
+      // var objectExpression = pairExpression.objectExpression
 
+      // var objectId = this.objectIdsByPairId[pairId]
+      // var valueIds = this.valueIdsByKeyByObjectId[objectId]
+      // var key = this.keysByPairId[pairId]
+      // var oldId = valueIds[key]
+      // valueIds[key] = valueId
+
+      // newExpression.key = key
+
+      var oldId = this.valueIdsByPairId[pairId]
+      var objectId = this.objectIdsByPairId[pairId]
+
+      if (newValueId == oldId) {
+        return
+      }
+
+      tree.parentIdsByChildId[oldId] = null
+      this.pairIdsByValueId[oldId] = null
+      this.valueIdsByPairId[oldId] = null
+      tree.parentIdsByChildId[pairId] = objectId
+      this.valueIdsByPairId[pairId] = newValueId
+      this.pairIdsByValueId[newValueId] = pairId
+    }
+
+    function getFromFamily(tree, indexName, key) {
+      var value = tree[indexName][key]
+      if (typeof value == "undefined" && tree.parent) {
+        return getFromFamily(tree.parent, indexName, key)
+      } else if (value == null) {
+        return
+      } else {
+        return value
+      }
     }
 
     ExpressionTree.prototype.renameArgument = function(expressionId, index, newName) {
