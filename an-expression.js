@@ -5,31 +5,8 @@ module.exports = library.export(
   ["function-call", "./expression-to-javascript", "forkable-list"],
   function(functionCall, treeToJavascript, forkableList) {
 
-    function anExpression(treeId, index, id, attributes) {
-
-      throw new Error("broken")
-
-      if (typeof id != "string") {
-        throw new Error("anExpression takes (treeId, index, id, kind, attributes)")
-      }
-
-      var tree = anExpression.getTree(treeId)
-
-      if (!tree) {
-        throw new Error("No tree "+treeId+" just "+Object.keys(trees))
-      }
-
-      var expression = rehydrate(attributes, tree)
-
-      expression.id = id
-
-      if (typeof index == "undefined") {
-        throw new Error("no index?")
-      }
-
-      tree.addExpressionAt(expression, index)
-
-      return expression
+    function anExpression() {
+      throw new Error("deprecated")
     }
 
     anExpression.tree = function(data) {
@@ -82,8 +59,6 @@ module.exports = library.export(
         isDeclaration: {},
       }
     }
-
-
 
     function freshLists() {
       return {
@@ -796,7 +771,6 @@ module.exports = library.export(
         id: anId(),
       }
     }
-
 
 
     function contains(array, value) {
