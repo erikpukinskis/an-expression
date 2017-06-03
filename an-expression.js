@@ -232,7 +232,7 @@ module.exports = library.export(
       var array = attributes[key]
       var arrayId = attributes.id
 
-      if (!array) {
+      if (!array || array.length == 0) {
         tree.lists[key][arrayId] = EMPTY_LIST
         return
       }
@@ -414,8 +414,7 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.getArgumentName = function(expressionId, index) {
-      var names = this.getList("argumentNames", expressionId)
-      return names.get(index)
+      return this.getListItem("argumentNames", expressionId, index)
     }
 
     function expectId(id, message) {
@@ -478,8 +477,20 @@ module.exports = library.export(
       }
     }
 
+    ExpressionTree.prototype.getListItem = function(key, expressionId, index) {
+      expectId(expressionId, "second parameter to tree.getListItem")
 
-    ExpressionTree.prototype.getList = function(key, expressionId, array) {
+      var list = this.getList(key, expressionId)
+
+      if (!list) {
+        throw new Error("tried to get item "+index+" from "+key+" list on "+expressionId+" but couldn't find a list?")
+      }
+
+      return list.get(index)
+    }
+
+    ExpressionTree.prototype.getList = function(key, expressionId) {
+
       expectId(expressionId, "second parameter to tree.getList")
 
       if (!this.lists[key]) {
@@ -492,10 +503,11 @@ module.exports = library.export(
         list = this.parent.getList(key, expressionId)
       }
 
-      var isString = typeof expressionId == "string"
-      var isExpression = isString && expressionId.slice(0,3) == "exp"
-
-      return list
+      if (list == EMPTY_LIST) {
+        return
+      } else {
+        return list
+      }
     }
 
     ExpressionTree.prototype.ensureList = function(key, expressionId, array) {
@@ -505,7 +517,7 @@ module.exports = library.export(
 
       var list = this.lists[key][expressionId]
 
-      if (list && (list != null)) {
+      if (list && (list != EMPTY_LIST)) {
         if (array) {
           throw new Error("can't initialize a forkable list where one already exists")
         }
@@ -519,19 +531,18 @@ module.exports = library.export(
 
         var parentList = this.parent.getList(key, expressionId, array)
 
-        if (parentList && (parentList != null)) {
+        if (parentList) {
           var list = parentList.fork()
           this.lists[key][expressionId] = list
 
           return list
         }
-
-      } else {
-        list = forkableList(array)
-        this.lists[key][expressionId] = list
-
-        return list        
       }
+
+      list = forkableList(array)
+      this.lists[key][expressionId] = list
+
+      return list        
     }
 
     ExpressionTree.prototype.getKeyName = function(pairId) {
