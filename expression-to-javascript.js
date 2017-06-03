@@ -24,18 +24,29 @@ module.exports = library.export(
 
     var codeGenerators = {
       "function call": function(tree, id) {
-        throw new Error("impl")
-        var args = expression.arguments.map(
-          expressionToJavascript
-        ).join(",\n")
-        return expression.functionName+"(\n"+pad(args)+"\n)"
+        var argIds = tree.getList("arguments", id)
+        var name = tree.getAttribute("functionName", id)
+
+        if (!argIds) {
+          var argLines = ""
+        } else {
+          var argLines = argIds.map(toArgLine).join(",\n")
+        }
+
+        function toArgLine(expressionId) {
+          return "  "+expressionToJavascript(tree, expressionId)
+        }
+
+        return name+"(\n"+argLines+")"
       },
       "array literal": function(tree, id) {
-        throw new Error("impl")
-        var items = expression.items.map(
-          expressionToJavascript
-        )
-        return "[\n"+pad(items.join(",\n"))+"\n]"
+        var itemIds = tree.getList("items", id)
+
+        var items = itemIds.map(function(itemId) {
+          return "  "+expressionToJavascript(tree, itemId)
+        })
+
+        return "[\n"+items.join(",\n")+"\n]"
       },
       "function literal": function(tree, id) {
         var names = tree.getList("argumentNames", id).join(", ")
@@ -62,24 +73,26 @@ module.exports = library.export(
         return code
       },
       "string literal": function(tree, id) {
-        throw new Error("impl")
-        return JSON.stringify(expression.string)
+        var string = tree.getAttribute("string", id)
+        return JSON.stringify(string)
       },
       "number literal": function(tree, id) {
-        throw new Error("impl")
-        return expression.number.toString()
+        var number = tree.getAttribute("number", id)
+        return number.toString()
       },
       "empty expression": function() {
         return "null"
       },
       "variable assignment": function(tree, id) {
-        throw new Error("impl")
+        var variableName = tree.getAttribute("variableName", id)
+        var rhsId = tree.getAttribute("expression", id)
+        var isDeclaration = tree.getAttribute("isDeclaration", id)
 
-        source = expression.variableName
-          +" = "
-          +expressionToJavascript(expression.expression)
+        var rhsSource = expressionToJavascript(tree, rhsId)
 
-        if (expression.isDeclaration) {
+        var source = variableName+" = "+rhsSource
+
+        if (isDeclaration) {
           source = "var "+source
         }
 
@@ -90,25 +103,32 @@ module.exports = library.export(
         return expression.variableName
       },
       "object literal": function(tree, id) {
-        throw new Error("impl")
-        var keyPairs = []
 
-        for(var i=0; i<expression.keys.length; i++) {
-          var key = expression.keys[i]
-          var value = expression.values[i]
+        var pairIds = tree.getList("pairIds", id)
 
-          keyPairs.push(
-            "  "
-            +JSON.stringify(key)
-            +": "
-            +expressionToJavascript(value)
-          )
+        if (pairIds) {
+          var pairLines = pairIds.map(toLine).join(",\n")
+        } else {
+          var pairLines = ""
         }
-        return "{\n"+keyPairs.join(",\n")+"\n}"
+
+        function toLine(pairId) {
+          var key = tree.getAttribute("key", pairId)
+          var valueId = tree.getAttribute("valueId", pairId)
+
+          var valueSource = expressionToJavascript(tree, valueId)
+
+          var pairSource = "  "+JSON.stringify(key)+": "+valueSource
+
+          return pairSource
+        }
+
+        return "{\n"+pairLines+"\n}"
       },
       "return statement": function(tree, id) {
-        throw new Error("impl")
-        return "return "+expressionToJavascript(expression.expression)
+        var rhsId = tree.getAttribute("expression", id)
+        var rhsSource = expressionToJavascript(tree, rhsId)
+        return "return "+rhsSource
       },
       "boolean": function(tree, id) {
         var value = tree.getAttribute("value", id)
