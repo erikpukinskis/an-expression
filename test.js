@@ -9,33 +9,41 @@ runTest(
 
     var func = anExpression.functionLiteral({functionName: "whatev"})
 
-    orig.addExpressionAt(func, orig.reservePosition())
+    orig.addExpressionAt(orig.reservePosition(), func)
 
-    orig.addLine(anExpression.true(), orig.reservePosition(), func)
+    var originalTrue = anExpression.true()
+
+    orig.addLine(func.id, orig.reservePosition(), originalTrue)
 
     var fork = orig.fork()
 
-    debugger
+    var originalKind = fork.getAttribute("kind", originalTrue.id)
 
-    fork.addLine(anExpression.false(), fork.reservePosition(), func)
+    expect(originalKind).to.equal("boolean")
+    done.ish("forking maintains attributes")
 
-    orig.addLine(anExpression.true(), orig.reservePosition(), func)
+    fork.addLine(func.id, fork.reservePosition(), anExpression.false())
 
-    var trueTrue = anExpression.toJavascript(orig.root())
+    var falseFalse = fork.toJavaScript()
 
-    expect(trueTrue).to.equal(function whatev() {
-  true
-  true
-}.toString())
-
-    done.ish("original program looks good")
-
-    var falseFalse = anExpression.toJavascript(fork.root())
-
-    expect(trueTrue).to.equal(function whatev() {
+    expect(falseFalse).to.equal(
+function whatev() {
   true
   false
 }.toString())
+    done.ish("fork looks good")
+
+    orig.addLine(func.id, orig.reservePosition(), anExpression.true())
+
+    var trueTrue = orig.toJavaScript()
+
+    expect(trueTrue).to.equal(
+function whatev() {
+  true
+  true
+}.toString())
+    done.ish("original program looks good")
+
 
     done()
   }
