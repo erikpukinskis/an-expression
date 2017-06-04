@@ -786,20 +786,20 @@ module.exports = library.export(
         }
       }
 
-    anExpression.true = function() {
+    anExpression.boolean = function(value) {
       return {
         kind: "boolean",
-        value: true,
+        value: value,
         id: anId(),
       }
     }
 
+    anExpression.true = function() {
+      return anExpression.boolean(true)
+    }
+
     anExpression.false = function() {
-      return {
-        kind: "boolean",
-        value: false,
-        id: anId(),
-      }
+      return anExpression.boolean(false)
     }
 
     anExpression.returnStatement = function(attributes) {
