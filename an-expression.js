@@ -589,7 +589,7 @@ module.exports = library.export(
     }
 
     function addFunctionArgument(tree, functionLiteralId, argumentName) {
-      var list = this.ensureList("argumentNames", functionLiteralId)
+      var list = tree.ensureList("argumentNames", functionLiteralId)
 
       list.set(list.next(), argumentName)
     }
@@ -612,7 +612,7 @@ module.exports = library.export(
       setAttribute(tree, "pairId", valueId, pairId)
       setAttribute(tree, "valueId", pairId, valueId)
 
-      var pairs = this.ensureList("pairs", objectId)
+      var pairs = tree.ensureList("pairs", objectId)
 
       if (options.index) {
         pairs.splice(options.index, 0, pairId)
