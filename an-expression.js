@@ -623,6 +623,10 @@ module.exports = library.export(
 
     ExpressionTree.prototype.addKeyPair = function(objectId, key, valueId, options) {
 
+      expectId(objectId, "object id as the first argument to tree.addKeyPair")
+
+      expectId(valueId, "valid id as the third argument to tree.addKeyPair")
+
       this.log("anExpression.addKeyPair", this.id, objectId, key, valueId, options)
 
       addKeyPair(this, objectId, key, valueId, options)
