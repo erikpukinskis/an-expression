@@ -83,7 +83,8 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.reservePosition = function() {
-      return this.expressionIds.next()
+      var index = this.expressionIds.next()
+      return index
     }
 
     var lastExpressionInteger = typeof window == "undefined" ? 1000*1000 : 1000
@@ -159,7 +160,15 @@ module.exports = library.export(
 
       switch(attributes.kind) {
       case "function literal":
-        setChildren("body", tree, attributes)
+        var attributesHaveBody = tree.attributes.body && tree.attributes.body.length
+        var bodyAlreadyExists = tree.getList("body", attributes.id)
+
+        if (attributesHaveBody && bodyAlreadyExists) {
+          throw new Error("Trying to add a function literal with some line ids, but there are already lines in the body. Not sure what to do.")
+        } else if (attributesHaveBody) {
+          setChildren("body", tree, attributes)
+        }
+
         if (attributes.argumentNames) {
           var args = tree.ensureList("argumentNames", id, attributes.argumentNames)
         }
@@ -274,6 +283,8 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.addLine = function(functionLiteralId, index, attributes) {
+
+      expectId(functionLiteralId, "first argument to tree.addLine")
 
       if (typeof attributes != "object") {
         throw new Error("tree.addLine expects (functionId, integer index, attributes object). Attributes object was "+attributes)
@@ -410,7 +421,12 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.rootId = function() {
-      return this.expressionIds.get(0)
+      var id = this.expressionIds.get(0)
+      if (typeof id == "undefined") {
+        debugger
+        throw new Error("Tree has no root!")
+      }
+      return id
     }
 
     ExpressionTree.prototype.getArgumentName = function(expressionId, index) {
@@ -420,9 +436,9 @@ module.exports = library.export(
     function expectId(id, message) {
       if (typeof id != "string" || id.slice(0,3) != "exp") {
         if (message) {
-          message += " is supposed to be an expression id, but you passed "+id
+          message += " is supposed to be an expression id, but you passed "+_wtf(id)
         } else {
-          message = id+"  doesn't seem to be an expression id?"
+          message = _wtf(id)+"  doesn't seem to be an expression id?"
         }
         throw new Error(message)
       }
