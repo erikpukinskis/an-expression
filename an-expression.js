@@ -612,9 +612,9 @@ module.exports = library.export(
       setAttribute(tree, "pairId", valueId, pairId)
       setAttribute(tree, "valueId", pairId, valueId)
 
-      var pairs = tree.ensureList("pairs", objectId)
+      var pairs = tree.ensureList("pairIds", objectId)
 
-      if (options.index) {
+      if (options && typeof options.index != "undefined") {
         pairs.splice(options.index, 0, pairId)
       } else {
         pairs.set(pairs.next(), pairId)
