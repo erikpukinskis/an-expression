@@ -99,8 +99,7 @@ module.exports = library.export(
         return source
       },
       "variable reference": function(tree, id) {
-        throw new Error("impl")
-        return expression.variableName
+        return tree.getAttribute("variableName", id)
       },
       "object literal": function(tree, id) {
 

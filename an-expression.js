@@ -228,6 +228,9 @@ module.exports = library.export(
       case "return statement":
         tree.setAttribute("expression", id, attributes.expression)
         break;
+      case "variable reference":
+        tree.setAttribute("variableName", id, attributes.variableName)
+        break;
       default:
         throw new Error("how to add a "+attributes.kind+" expression?")
       }
@@ -740,6 +743,14 @@ module.exports = library.export(
         functionName: attributes.functionName,
       }
     }
+
+    anExpression.variableReference = function(variableName) {
+        return {
+          kind: "variable reference",
+          variableName: variableName,
+          id: anId(),
+        }
+      }
 
     anExpression.variableAssignment = function(attributes) {
       return {

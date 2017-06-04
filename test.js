@@ -32,7 +32,7 @@ runTest(
     orig.addExpressionAt(orig.reservePosition(), number)
 
 
-    var b = anExpression.stringLiteral("b")
+    var b = anExpression.variableReference("b")
     var object = anExpression.objectLiteral({
       a: b.id
     })
@@ -64,7 +64,7 @@ function micCheck(one, two) {
     1
   ])
   var foo = {
-    "a": "b"
+    "a": b
   }
   return false
 }.toString()
