@@ -87,6 +87,10 @@ module.exports = library.export(
       return index
     }
 
+    ExpressionTree.prototype.getIds = function() {
+      return this.expressionIds.values()
+    }
+
     var lastExpressionInteger = typeof window == "undefined" ? 1000*1000 : 1000
     function anId() {
       lastExpressionInteger++
@@ -148,6 +152,10 @@ module.exports = library.export(
     function addToTree(index, attributes, tree) {
 
       var id = attributes.id
+      if (id == "explfm0") {
+        debugger
+      }
+      
       if (!id) {
         throw new Error("expr "+JSON.stringify(attributes, null, 2)+" doesn't have an id!")
       }

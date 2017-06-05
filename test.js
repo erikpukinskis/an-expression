@@ -27,14 +27,14 @@ runTest(
   ["./"],
   function(expect, done, anExpression) {
 
-    var orig = anExpression.tree()
+    var tree = anExpression.tree()
 
-    var func = anExpression.functionLiteral({
+    var mic = anExpression.functionLiteral({
       functionName: "micCheck",
       argumentNames: ["one", "two"]
     })
 
-    orig.addExpressionAt(orig.reservePosition(), func)
+    tree.addExpressionAt(tree.reservePosition(), mic)
 
 
     var string = anExpression.stringLiteral("hi")
@@ -48,10 +48,10 @@ runTest(
       ]
     })
 
-    orig.addLine(func.id, orig.reservePosition(), call)
-    orig.addExpressionAt(orig.reservePosition(), string)
-    orig.addExpressionAt(orig.reservePosition(), array)
-    orig.addExpressionAt(orig.reservePosition(), number)
+    tree.addLine(mic.id, tree.reservePosition(), call)
+    tree.addExpressionAt(tree.reservePosition(), string)
+    tree.addExpressionAt(tree.reservePosition(), array)
+    tree.addExpressionAt(tree.reservePosition(), number)
 
 
     var b = anExpression.variableReference("b")
@@ -64,9 +64,9 @@ runTest(
       expression: object.id,
     })
 
-    orig.addLine(func.id, orig.reservePosition(), ass)
-    orig.addExpressionAt(orig.reservePosition(), object)
-    orig.addExpressionAt(orig.reservePosition(), b)
+    tree.addLine(mic.id, tree.reservePosition(), ass)
+    tree.addExpressionAt(tree.reservePosition(), object)
+    tree.addExpressionAt(tree.reservePosition(), b)
 
 
     var falseLiteral = anExpression.false()
@@ -74,9 +74,23 @@ runTest(
       expression: falseLiteral.id,
     })
 
-    orig.addLine(func.id, orig.reservePosition(), ret)
-    orig.addExpressionAt(orig.reservePosition(), falseLiteral)
+    tree.addLine(mic.id, tree.reservePosition(), ret)
+    tree.addExpressionAt(tree.reservePosition(), falseLiteral)
 
+    var expectedIds = [
+      mic.id,
+      call.id,
+      string.id,
+      array.id,
+      number.id,
+      ass.id,
+      object.id,
+      b.id,
+      ret.id,
+      falseLiteral.id,
+    ]
+
+    expect(tree.getIds()).to.eql(expectedIds)
 
     var correctSource = 
 function micCheck(one, two) {
@@ -91,9 +105,9 @@ function micCheck(one, two) {
   return false
 }.toString()
 
-  console.log("\n\nORIGINAL\n========================\n"+orig.toJavaScript()+"\n=====================\n\n\n\nCORRECT:\n======================\n"+correctSource+"\n=====================\n\n\n")
+    // console.log("\n\nORIGINAL\n========================\n"+tree.toJavaScript()+"\n=====================\n\n\n\nCORRECT:\n======================\n"+correctSource+"\n=====================\n\n\n")
 
-    expect(orig.toJavaScript()).to.equal(correctSource)
+    expect(tree.toJavaScript()).to.equal(correctSource)
 
 
     done()
