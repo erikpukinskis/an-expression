@@ -151,9 +151,12 @@ module.exports = library.export(
       if (!id) {
         throw new Error("expr "+JSON.stringify(attributes, null, 2)+" doesn't have an id!")
       }
+      if (typeof index != "number") {
+        throw new Error("first argument to addToTree needs to be an index")
+      }
 
       if (attributes.kind) {
-        tree.setAttribute("kind", id, attributes.kind)
+        setAttribute(tree, "kind", id, attributes.kind)
       } else {
         throw new Error("expr "+JSON.stringify(attributes, null, 2)+" doesn't have a kind!")
       }
@@ -172,10 +175,10 @@ module.exports = library.export(
         if (attributes.argumentNames) {
           var args = tree.ensureList("argumentNames", id, attributes.argumentNames)
         }
-        tree.setAttribute("functionName", id, attributes.functionName)
+        setAttribute(tree, "functionName", id, attributes.functionName)
         break;
       case "function call":
-        tree.setAttribute("functionName", id, attributes.functionName)
+        setAttribute(tree, "functionName", id, attributes.functionName)
         setChildren("arguments", tree, attributes)
         break;
       case "array literal":
@@ -189,16 +192,16 @@ module.exports = library.export(
           throw new Error("no rhs")
         }
         var rhsId = attributes.expression
-        tree.setAttribute("variableName", id, attributes.variableName)
-        tree.setAttribute("expression", id, rhsId) 
-        tree.setAttribute("isDeclaration", id, attributes.isDeclaration) 
-        tree.setAttribute("parentId", rhsId, id)
+        setAttribute(tree, "variableName", id, attributes.variableName)
+        setAttribute(tree, "expression", id, rhsId) 
+        setAttribute(tree, "isDeclaration", id, attributes.isDeclaration) 
+        setAttribute(tree, "parentId", rhsId, id)
         break;
       case "string literal":
-        tree.setAttribute("string", id,attributes.string)
+        setAttribute(tree, "string", id,attributes.string)
         break;
       case "number literal":
-        tree.setAttribute("number", id,attributes.number)
+        setAttribute(tree, "number", id,attributes.number)
         break;
       case "object literal":
         if (!attributes.valueIdsByKey) {
@@ -213,23 +216,23 @@ module.exports = library.export(
 
           pairIds.push(pairId)
 
-          tree.setAttribute("parentId", valueId, objectId)
-          tree.setAttribute("key", pairId, key)
-          tree.setAttribute("valueId", pairId, valueId)
-          tree.setAttribute("pairId", valueId, pairId)
+          setAttribute(tree, "parentId", valueId, objectId)
+          setAttribute(tree, "key", pairId, key)
+          setAttribute(tree, "valueId", pairId, valueId)
+          setAttribute(tree, "pairId", valueId, pairId)
         }
 
         tree.ensureList("pairIds", objectId, pairIds)
 
         break;
       case "boolean":
-        tree.setAttribute("value", id, attributes.value)
+        setAttribute(tree, "value", id, attributes.value)
         break;
       case "return statement":
-        tree.setAttribute("expression", id, attributes.expression)
+        setAttribute(tree, "expression", id, attributes.expression)
         break;
       case "variable reference":
-        tree.setAttribute("variableName", id, attributes.variableName)
+        setAttribute(tree, "variableName", id, attributes.variableName)
         break;
       default:
         throw new Error("how to add a "+attributes.kind+" expression?")
