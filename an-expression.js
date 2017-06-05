@@ -152,10 +152,7 @@ module.exports = library.export(
     function addToTree(index, attributes, tree) {
 
       var id = attributes.id
-      if (id == "explfm0") {
-        debugger
-      }
-      
+
       if (!id) {
         throw new Error("expr "+JSON.stringify(attributes, null, 2)+" doesn't have an id!")
       }
@@ -437,7 +434,6 @@ module.exports = library.export(
     ExpressionTree.prototype.rootId = function() {
       var id = this.expressionIds.get(0)
       if (typeof id == "undefined") {
-        debugger
         throw new Error("Tree has no root!")
       }
       return id
