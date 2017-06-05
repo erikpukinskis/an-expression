@@ -112,6 +112,14 @@ function whatev() {
 }.toString())
     done.ish("fork looks good")
 
+    var vals = []
+    fork.eachListItem("body", func.id, function(booleanId) {
+      var value = fork.getAttribute("value", booleanId)
+      vals.push(value) 
+    })
+    expect(vals).to.eql([true, false])
+    done.ish("can iterate fork")
+
     orig.addLine(func.id, orig.reservePosition(), anExpression.true())
 
     var trueTrue = orig.toJavaScript()

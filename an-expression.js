@@ -531,6 +531,12 @@ module.exports = library.export(
       }
     }
 
+    ExpressionTree.prototype.eachListItem = function(key, expressionId, callback) {
+      var list = this.getList(key, expressionId)
+      if (!list) { return }
+      list.forEach(callback)
+    }
+
     ExpressionTree.prototype.ensureList = function(key, expressionId, array) {
       if (!this.lists[key]) {
         throw new Error(
