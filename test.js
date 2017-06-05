@@ -1,5 +1,27 @@
 var runTest = require("run-test")(require)
 
+runTest.skip(
+  "adding multiple expressions at once",
+  ["./"],
+  function(expect, done, anExpression) {
+    var attributes = 
+      anExpression.functionCall({
+        functionName: "addHtml",
+        arguments: [
+          anExpression.stringLiteral("text")
+        ]
+      })
+
+    var tree = anExpression.tree()
+    tree.addExpressionAt(0, attributes)
+
+    var string = tree.query("root.arguments.0.text")
+
+    expect(string).to.equal("text")
+    done()
+  }
+)
+
 runTest(
   "source generation",
   ["./"],
