@@ -440,7 +440,7 @@ module.exports = library.export(
     }
 
     function expectId(id, message) {
-      if (typeof id != "string" || id.slice(0,3) != "exp") {
+      if (typeof id != "string" || id.slice(0,3) != "exp" || id.slice(0,10) == "expression") {
         if (message) {
           message += " is supposed to be an expression id, but you passed "+_wtf(id)
         } else {
