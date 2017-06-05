@@ -498,7 +498,9 @@ module.exports = library.export(
 
     ExpressionTree.prototype.getListItem = function(key, expressionId, index) {
       expectId(expressionId, "second parameter to tree.getListItem")
-
+      if (typeof index != "number") {
+        throw new Error("third argument to tree.getListItem should be an integer index")
+      }
       var list = this.getList(key, expressionId)
 
       if (!list) {
