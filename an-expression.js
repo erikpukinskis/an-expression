@@ -84,8 +84,11 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.getRole = function(id) {
-      console.log("getting role of", id)
       return this.getAttribute("role", id)
+    }
+
+    ExpressionTree.prototype.getParentOf = function(id) {
+      return this.getAttribute("parentId", id)
     }
 
     ExpressionTree.prototype.reservePosition = function() {
