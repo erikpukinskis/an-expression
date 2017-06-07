@@ -57,6 +57,7 @@ module.exports = library.export(
         variableName: {},
         expression: {},
         isDeclaration: {},
+        role: {},
       }
     }
 
@@ -80,6 +81,11 @@ module.exports = library.export(
 
       parent.expressionIds = this.expressionIds
       this.expressionIds = parent.expressionIds.fork()
+    }
+
+    ExpressionTree.prototype.getRole = function(id) {
+      console.log("getting role of", id)
+      return this.getAttribute("role", id)
     }
 
     ExpressionTree.prototype.reservePosition = function() {
@@ -248,12 +254,13 @@ module.exports = library.export(
 
     var EMPTY_LIST = {emptyList: true}
 
-    function setChildren(key, tree, attributes) {
-      var array = attributes[key]
-      var arrayId = attributes.id
+    function setChildren(key, tree, parentAttributes) {
 
-      if (!array || array.length == 0) {
-        tree.lists[key][arrayId] = EMPTY_LIST
+      var values = parentAttributes[key]
+      var parentId = parentAttributes.id
+
+      if (!values || values.length == 0) {
+        tree.lists[key][parentId] = EMPTY_LIST
         return
       }
 
@@ -261,22 +268,37 @@ module.exports = library.export(
         throw new Error("Tree doesn't have a place for "+key+" lists")
       }
 
-      var list = tree.lists[key][arrayId]
+      var list = tree.lists[key][parentId]
 
       if (list) {
-        throw new Error("overwrite "+key+" list on "+arrayId+"?")
+        throw new Error("overwrite "+key+" list on "+parentId+"?")
       }
 
       if (!tree.lists[key]) {
         throw new Error("trying to set children in "+key+" attribute, but there's no store for that.")
       }
 
-      tree.ensureList(key, arrayId, array)
+      tree.ensureList(key, parentId, values)
 
-      for (var i=0; i<array.length; i++) {
-        var itemId = array[i]
+      switch(key) {
+      case "body":
+        var role = "function literal line"
+        break;
+      case "items":
+        var role = "array item"
+        break;
+      case "arguments":
+        var role = "call argument"
+        break;
+      default:
+        throw new Error("What role do items in "+key+" play?")
+      }
+
+      for (var i=0; i<values.length; i++) {
+        var itemId = values[i]
         expectId(itemId)
-        tree.setAttribute("parentId", itemId, arrayId)
+        tree.setAttribute("parentId", itemId, parentId)
+        tree.setAttribute("role", itemId, role)
       }
     }
 
@@ -314,13 +336,22 @@ module.exports = library.export(
       var body = tree.ensureList("body", functionId)
       body.set(body.next(), lineId)
       tree.setAttribute("parentId", lineId, functionId)
+      tree.setAttribute("role", lineId, "function literal line")
     }
 
     ExpressionTree.prototype.insertExpression = function(attributes, relationship, relativeToThisId) {
       
       var newExpressionId = attributes.id
-
       var parentId = this.getAttribute("parentId", relativeToThisId)
+      var role = this.getAttribute("role", relativeToThisId)
+
+      if (!role) {
+        throw new Error("inserting relative to "+relativeToThisId+" but it has no role?")
+      }
+
+      this.setAttribute("parentId", newExpressionId, parentId)
+      this.setAttribute("role", newExpressionId, role)
+
 
       if (relationship == "before") {
 
@@ -340,8 +371,6 @@ module.exports = library.export(
       } else { throw new Error() }
 
       addToTree(splicePosition, attributes, this)
-
-      this.setAttribute("parentId", newExpressionId, parentId)
 
       this.expressionIds.splice(splicePosition, deleteThisMany, newExpressionId)
 

@@ -27,6 +27,19 @@ runTest(
   ["./"],
   function(expect, done, anExpression) {
 
+    var expectedSource = 
+function micCheck(one, two) {
+  callIt(
+    "hi",
+    [
+    1
+  ])
+  var foo = {
+    "a": b
+  }
+  return false
+}.toString()
+
     var tree = anExpression.tree()
 
     var mic = anExpression.functionLiteral({
@@ -35,7 +48,6 @@ runTest(
     })
 
     tree.addExpressionAt(tree.reservePosition(), mic)
-
 
     var string = anExpression.stringLiteral("hi")
     var number = anExpression.numberLiteral(1)
@@ -47,12 +59,15 @@ runTest(
         array.id
       ]
     })
-
+    
     tree.addLine(mic.id, tree.reservePosition(), call)
     tree.addExpressionAt(tree.reservePosition(), string)
     tree.addExpressionAt(tree.reservePosition(), array)
     tree.addExpressionAt(tree.reservePosition(), number)
 
+    expect(tree.getRole(call.id)).to.equal("function literal line")
+    expect(tree.getRole(number.id)).to.equal("array item")
+    done.ish("remember roles")
 
     var b = anExpression.variableReference("b")
     var object = anExpression.objectLiteral({
@@ -92,22 +107,10 @@ runTest(
 
     expect(tree.getIds()).to.eql(expectedIds)
 
-    var correctSource = 
-function micCheck(one, two) {
-  callIt(
-    "hi",
-    [
-    1
-  ])
-  var foo = {
-    "a": b
-  }
-  return false
-}.toString()
 
-    // console.log("\n\nORIGINAL\n========================\n"+tree.toJavaScript()+"\n=====================\n\n\n\nCORRECT:\n======================\n"+correctSource+"\n=====================\n\n\n")
+    // console.log("\n\nORIGINAL\n========================\n"+tree.toJavaScript()+"\n=====================\n\n\n\nEXPECTED:\n======================\n"+expectedSource+"\n=====================\n\n\n")
 
-    expect(tree.toJavaScript()).to.equal(correctSource)
+    expect(tree.toJavaScript()).to.equal(expectedSource)
 
 
     done()
