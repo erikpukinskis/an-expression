@@ -452,7 +452,7 @@ module.exports = library.export(
       if (!universe) { return }
       var args = Array.prototype.slice.call(arguments)
 
-      universe.apply(null, args)
+      universe.do.apply(universe, args)
     }
 
     ExpressionTree.prototype.builder = function() {
