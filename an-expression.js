@@ -460,7 +460,7 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.asBinding = function() {
-      return functionCall("library.get(\"program\").findById(\""+this.id+"\")").singleton()
+      return functionCall("library.get(\"an-expression\").getTree(\""+this.id+"\")").singleton()
     }
 
     ExpressionTree.prototype.rootId = function() {
