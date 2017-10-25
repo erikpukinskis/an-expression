@@ -21,7 +21,7 @@ tree.eachListItem(
     if (parentId != tree.root().id) {
       throw new Error("Bad root")} })
 
-tree.addKeyPair(
+tree.addKeyValuePair(
   objectExpressionId,
   "b",
   tree.numberLiteral(2))

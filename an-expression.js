@@ -451,7 +451,6 @@ module.exports = library.export(
       var universe = this.universe
       if (!universe) { return }
       var args = Array.prototype.slice.call(arguments)
-
       universe.do.apply(universe, args)
     }
 
@@ -646,18 +645,19 @@ module.exports = library.export(
       this.changed()
     }
 
-    anExpression.addKeyPair = function(treeId, objectId, key, valueId, options) {
+    anExpression.addKeyValuePair =function(treeId, objectId, key, valueId, options) {
       var tree = anExpression.getTree(treeId)
-      addKeyPair(tree, objectId, key, valueId, options)
+      addKeyValuePair(tree, objectId, key, valueId, options)
     }
 
-    function addKeyPair(tree, objectId, key, valueId, options) {
+    function addKeyValuePair(tree, objectId, key, valueId, options) {
       var pairId = anExpression.id()
 
       setAttribute(tree, "key", pairId, key)
       setAttribute(tree, "parentId", valueId, objectId)
       setAttribute(tree, "pairId", valueId, pairId)
       setAttribute(tree, "valueId", pairId, valueId)
+      console.log("Set valueId of "+pairId+" to "+pairId)
 
       var pairs = tree.ensureList("pairIds", objectId)
 
@@ -668,15 +668,15 @@ module.exports = library.export(
       }
     }
 
-    ExpressionTree.prototype.addKeyPair = function(objectId, key, valueId, options) {
+    ExpressionTree.prototype.addKeyValuePair = function(objectId, key, valueId, options) {
 
-      expectId(objectId, "object id as the first argument to tree.addKeyPair")
+      expectId(objectId, "object id as the first argument to tree.addKeyValuePair")
 
-      expectId(valueId, "valid id as the third argument to tree.addKeyPair")
+      expectId(valueId, "valid id as the third argument to tree.addKeyValuePair")
 
-      this.log("anExpression.addKeyPair", this.id, objectId, key, valueId, options)
+      this.log("anExpression.addKeyValuePair", this.id, objectId, key, valueId, options)
 
-      addKeyPair(this, objectId, key, valueId, options)
+      addKeyValuePair(this, objectId, key, valueId, options)
     }
 
     anExpression.setKeyValue = function(treeId, pairId, newValueId) {
