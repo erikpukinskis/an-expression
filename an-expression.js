@@ -255,7 +255,7 @@ module.exports = library.export(
       tree.expressionIds.set(index, id)
     }
 
-    var EMPTY_LIST = {emptyList: true}
+    var EMPTY_LIST = []
 
     function setChildren(key, tree, parentAttributes) {
 
@@ -562,11 +562,10 @@ module.exports = library.export(
         list = this.parent.getList(key, expressionId)
       }
 
-      if (list == EMPTY_LIST) {
-        return
-      } else {
-        return list
+      if (EMPTY_LIST.length > 0) {
+        throw new Error("Someone mutated the empty list!")
       }
+      return list || EMPTY_LIST
     }
 
     ExpressionTree.prototype.eachListItem = function(key, expressionId, callback) {
