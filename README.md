@@ -26,3 +26,82 @@ tree.addKeyValuePair(
   "b",
   tree.numberLiteral(2))
 ```
+
+## Expression generators
+
+```javascript
+
+var hello = anExpression.stringLiteral("hello, world")
+
+// "hello, world"
+
+anExpression.functionLiteral({
+  functionName: "add",
+  argumentNames: ["a", "b"],
+  body: hello
+})
+
+// function add(a, b) {
+//   "hello, world"
+// }
+
+var a = anExpression.numberLiteral(42)
+
+// 42
+
+var b = anExpression.numberLiteral(1)
+
+// 1
+
+anExpression.functionCall({
+  functionName: "add",
+  arguments: [a, b]
+})
+
+// add(42, 1)
+
+anExpression.variableReference("a")
+
+// a
+
+anExpression.variableAssignment({
+  variableName: "a",
+  expression: "b"
+})
+
+// a = b
+
+anExpression.variableAssignment({
+  variableName: "c",
+  expression: "b",
+  isDeclaration: true
+})
+
+// var c = b
+
+anExpression.objectLiteral({
+  name: a.id
+})
+
+// {name: a}
+
+anExpression.arrayLiteral([a.id, b.id])
+
+// [a, b]
+
+anExpression.boolean(true)
+anExpression.true()
+
+// true
+
+anExpression.false()
+
+// false
+
+anExpression.returnStatement({
+  expression: a
+})
+
+// return a
+
+```
