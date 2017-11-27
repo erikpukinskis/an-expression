@@ -104,7 +104,7 @@ module.exports = library.export(
     function anId() {
       lastExpressionInteger++
       var id = lastExpressionInteger.toString(36)
-      return "exp"+id
+      return "exp_"+id
     }
 
     var trees = {}
