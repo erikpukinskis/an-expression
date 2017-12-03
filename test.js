@@ -1,5 +1,17 @@
 var runTest = require("run-test")(require)
 
+runTest(
+  "add a string to a function literal with no body"
+)
+
+runTest(
+  "Add a string to a function call with 2 arguments"
+)
+
+runTest(
+  "Convert a string to a function call"
+)
+
 runTest.skip(
   "adding multiple expressions at once",
   ["./"],
