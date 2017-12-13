@@ -12,6 +12,10 @@ module.exports = library.export(
 
       var kind = tree.getAttribute("kind", id)
 
+      if (!kind) {
+        throw new Error("Some expression "+id+" in this tree: "+JSON.stringify(tree, null, 2)+" has no kind. Weird.")
+      }
+
       var makeCode = codeGenerators[kind]
 
       if (typeof makeCode != "function") {

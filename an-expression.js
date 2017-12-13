@@ -104,7 +104,7 @@ module.exports = library.export(
     function anId() {
       lastExpressionInteger++
       var id = lastExpressionInteger.toString(36)
-      return "exp_"+id
+      return "exp-"+id
     }
 
     var trees = {}
@@ -142,7 +142,8 @@ module.exports = library.export(
 
     anExpression.addToTree = function(treeId, index, attributes) {
       var tree = this.getTree(treeId)
-      addToTree(index, attributes, tree)
+      setAttributes(attributes, tree)
+      tree.expressionIds.set(index, attribues.id)
     }
 
     ExpressionTree.prototype.addExpressionAt = function(index, attributes) {
@@ -155,18 +156,17 @@ module.exports = library.export(
       
       this.log("anExpression.addToTree", this.id, index, attributes)
 
-      addToTree(index, attributes, this)
+      setAttributes(attributes, this)
+
+      this.expressionIds.set(index, attributes.id)
     }
 
-    function addToTree(index, attributes, tree) {
+    function setAttributes(attributes, tree) {
 
       var id = attributes.id
 
       if (!id) {
         throw new Error("expr "+JSON.stringify(attributes, null, 2)+" doesn't have an id!")
-      }
-      if (typeof index != "number") {
-        throw new Error("first argument to addToTree needs to be an index")
       }
 
       if (attributes.kind) {
@@ -251,8 +251,6 @@ module.exports = library.export(
       default:
         throw new Error("how to add a "+attributes.kind+" expression?")
       }
-
-      tree.expressionIds.set(index, id)
     }
 
     var EMPTY_LIST = []
@@ -283,26 +281,73 @@ module.exports = library.export(
 
       tree.ensureList(key, parentId, values)
 
-      switch(key) {
-      case "body":
-        var role = "function literal line"
-        break;
-      case "items":
-        var role = "array item"
-        break;
-      case "arguments":
-        var role = "call argument"
-        break;
-      default:
-        throw new Error("What role do items in "+key+" play?")
-      }
+      var kindOfParent = tree.getAttribute("kind", parentId)
 
       for (var i=0; i<values.length; i++) {
         var itemId = values[i]
         expectId(itemId)
-        tree.setAttribute("parentId", itemId, parentId)
-        tree.setAttribute("role", itemId, role)
+        setParent(tree, parentId, kindOfParent, itemId)
       }
+    }
+
+    function setParent(tree, parentId, kindOfParent, itemId) {
+
+      if (kindOfParent == "function literal") {
+        var role = "function literal line"
+      } else if (kindOfParent == "array literal") {
+        var role = "array item"
+      } else if (kindOfParent == "function call") {
+        var role = "call argument"
+      } else {
+        throw new Error("What role do items in a "+kindOfParent+" play?")
+      }
+
+      tree.setAttribute("parentId", itemId, parentId)
+      tree.setAttribute("role", itemId, role)
+    }
+
+    function childListName(tree, parentId) {
+      var kindOfParent = tree.getAttribute("kind", parentId)
+
+      if (kindOfParent == "function literal") {
+        return "body"
+      } else if (kindOfParent == "array literal") {
+        return "items"
+      } else if (kindOfParent == "function call") {
+        return "arguments"
+      } else {
+        throw new Error("What kind of list does a "+kindOfParent+" keep its children in?")
+      }
+    }
+
+    ExpressionTree.prototype.addToParent = function(parentId, item) {
+
+      var bodyOrArgumentsOrWhatever = childListName(this, parentId)
+
+      var kindOfParent = this.getAttribute("kind", parentId)
+
+      setParent(this, parentId, kindOfParent, item.id)
+
+      var childIds = this.ensureList(bodyOrArgumentsOrWhatever, parentId)
+
+      var firstChild = childIds.get(0)
+
+      if (firstChild) {
+        var splicePosition = lastDescendantAfter(tree, this.expressionIds, indexOf(this, firstChild))
+        throw new error("check if this makes sense")
+      } else {
+        var splicePosition = indexOf(this, parentId)+1
+      }
+      
+      if (splicePosition == 0) {
+        throw new Error("Probs shouldn't be adding a child as the root of the tree")
+      }
+
+      this.expressionIds.splice(splicePosition, 0, item.id)
+
+      setAttributes(item, this)
+
+      childIds.set(childIds.next(), item.id)
     }
 
     anExpression.lineIn = function(functionLiteralId, treeId, index, attributes) {
@@ -313,7 +358,9 @@ module.exports = library.export(
 
       var tree = anExpression.getTree(treeId)
 
-      addToTree(index, attributes, tree)
+      setAttributes(attributes, tree)
+
+      tree.expressionIds.set(index, id)
 
       addLine(tree, functionLiteralId, attributes.id)
     }
@@ -326,7 +373,9 @@ module.exports = library.export(
         throw new Error("tree.addLine expects (functionId, integer index, attributes object). Attributes object was "+attributes)
       }
 
-      addToTree(index, attributes, this)
+      setAttributes(attributes, this)
+      this.expressionIds.set(index, attributes.id)
+
 
       this.log("anExpression.lineIn", functionLiteralId, this.id, index, attributes)
 
@@ -346,18 +395,10 @@ module.exports = library.export(
       
       var newExpressionId = attributes.id
       var parentId = this.getAttribute("parentId", relativeToThisId)
-      var role = this.getAttribute("role", relativeToThisId)
 
-      if (!role) {
-        throw new Error("inserting relative to "+relativeToThisId+" but it has no role?")
-      }
-
-      this.setAttribute("parentId", newExpressionId, parentId)
-      this.setAttribute("role", newExpressionId, role)
-
+      addToParent(parentId, newExpressionId)
 
       if (relationship == "before") {
-
         var splicePosition = indexBefore(this, relativeToThisId)
         var deleteThisMany = 0
 
@@ -371,15 +412,35 @@ module.exports = library.export(
         var splicePosition = 0
         var deleteThisMany = 1
 
+      } else if (relationship == "inside") {
+
+        var deleteThisMany = 0
+        var firstChild = this.getListItem(childListName(this, parentId), 0)
+
+        if (firstChild) {
+          var splicePosition = lastDescendantAfter(tree, this.expressionIds, indexOf(this, firstChild))
+        } else {
+          var splicePosition = indexOf(this, parentId)
+        }
+
       } else { throw new Error() }
 
-      addToTree(splicePosition, attributes, this)
+      setAttributes(attributes, this)
 
       this.expressionIds.splice(splicePosition, deleteThisMany, newExpressionId)
 
       var body = this.ensureList("body", parentId)
       
       body.spliceRelativeTo(relativeToThisId, relationship, 0, newExpressionId)
+    }
+
+    function indexOf(tree, id) {
+      for(var i=0; i<tree.expressionIds.length; i++) {
+        if (tree.expressionIds.get(i) == id) {
+          return i
+        }
+      }
+      throw new Error(id+" is not in tree")
     }
 
     function lastDescendantAfter(tree, ids, startIndex) {
@@ -755,6 +816,14 @@ module.exports = library.export(
       }
 
     anExpression.functionLiteral = function(attributes) {
+      if (!attributes) {
+        return {
+          kind: "function literal",
+          argumentNames: [],
+          body: [],
+          id: anId(),
+        }
+      }
       if (attributes.body) {
         throw new Error("Don't know how to initialize function bodies. Try anExpression.lineIn(...)")
       }

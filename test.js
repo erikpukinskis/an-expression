@@ -1,11 +1,33 @@
 var runTest = require("run-test")(require)
 
+// runTest.only("add a string to a function literal with no body")
+
 runTest(
-  "add a string to a function literal with no body"
+  "add a string to a function literal with no body",
+  ["."],
+  function(expect, done, anExpression) {
+
+    var tree = anExpression.tree()
+    
+    // why is the root of the tree exp-lflu if exp-lflt is the function literal?
+
+    tree.addExpressionAt(0, anExpression.functionLiteral())
+
+    var functionId = tree.rootId()
+
+    var stringLiteral = anExpression.stringLiteral("alert")
+
+    tree.addToParent(functionId, stringLiteral)
+
+    var source = tree.toJavaScript()
+
+    expect(source).to.equal('function() {\n  "alert"\n}')
+    done()
+  }
 )
 
 runTest(
-  "Add a string to a function call with 2 arguments"
+  "Add a string to a function call with 2 arguments",
 )
 
 runTest(
