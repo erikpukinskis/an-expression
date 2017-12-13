@@ -1,6 +1,6 @@
 var runTest = require("run-test")(require)
 
-// runTest.only("add a string to a function literal with no body")
+// runTest.only("Add multiple arguments to a function call")
 
 runTest(
   "add a string to a function literal with no body",
@@ -27,7 +27,25 @@ runTest(
 )
 
 runTest(
-  "Add a string to a function call with 2 arguments",
+  "Add multiple arguments to a function call",
+  ["./"],
+  function(expect, done, anExpression) {
+    var tree = anExpression.tree()
+
+    tree.addExpressionAt(
+      0,
+      anExpression.functionCall({
+        functionName: "hi"}))
+
+    tree.addToParent(tree.rootId(), anExpression.numberLiteral(1))
+
+    tree.addToParent(tree.rootId(), anExpression.true())
+
+    var source = tree.toJavaScript()
+
+    expect(source).to.equal('hi(\n  1,\n  true)')
+    done()
+  }
 )
 
 runTest(

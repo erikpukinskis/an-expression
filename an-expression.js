@@ -330,11 +330,11 @@ module.exports = library.export(
 
       var childIds = this.ensureList(bodyOrArgumentsOrWhatever, parentId)
 
-      var firstChild = childIds.get(0)
+      var lastChild = childIds.get(childIds.length-1)
 
-      if (firstChild) {
-        var splicePosition = lastDescendantAfter(tree, this.expressionIds, indexOf(this, firstChild))
-        throw new error("check if this makes sense")
+      if (lastChild) {
+        var splicePosition = indexOf(this, lastChild)+1
+        debugger
       } else {
         var splicePosition = indexOf(this, parentId)+1
       }
