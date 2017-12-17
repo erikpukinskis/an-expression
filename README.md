@@ -55,6 +55,11 @@ blah({
 tree.addExpressionAt(
   tree.reservePosition(),
   anExpression.functionLiteral())
+
+// Add a string literal inside that function literal
+var functionId = tree.rootId()
+var stringLiteral = anExpression.stringLiteral("alert")
+tree.addToParent(functionId, stringLiteral)
 ```
 
 ## Expression generators
