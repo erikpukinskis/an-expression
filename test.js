@@ -1,6 +1,6 @@
 var runTest = require("run-test")(require)
 
-// runTest.only("Add multiple arguments to a function call")
+// runTest.only("source generation")
 
 runTest(
   "add a string to a function literal with no body",
@@ -9,8 +9,6 @@ runTest(
 
     var tree = anExpression.tree()
     
-    // why is the root of the tree exp-lflu if exp-lflt is the function literal?
-
     tree.addExpressionAt(0, anExpression.functionLiteral())
 
     var functionId = tree.rootId()
@@ -49,7 +47,37 @@ runTest(
 )
 
 runTest(
-  "Convert a string to a function call"
+  "Convert a string to a function call",
+  ["./", "a-wild-universe-appeared"],
+  function(expect, done, anExpression, aWildUniverseAppeared) {
+    var tree = anExpression.tree()
+
+    var universe = aWildUniverseAppeared("debug", {anExpression: "an-expression"})
+    universe.mute()
+    tree.logTo(universe)
+    
+    tree.addExpressionAt(0, anExpression.functionLiteral())
+
+    var functionId = tree.rootId()
+
+    var stringLiteral = anExpression.stringLiteral("alert")
+
+    tree.addToParent(functionId, stringLiteral)
+
+    expect(tree.toJavaScript()).to.equal('function() {\n  "alert"\n}')
+
+    done.ish("string in function")
+
+    var call = anExpression.functionCall({
+      functionName: "alert"})
+    
+    tree.insertExpression(call, "inPlaceOf", stringLiteral.id)
+
+    var source = tree.toJavaScript();
+    expect(source).to.equal('function() {\n  alert()\n}')
+
+    done()
+  }
 )
 
 runTest.skip(

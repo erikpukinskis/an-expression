@@ -9,7 +9,8 @@
     "forkable-list": "*"
   },
   "devDependencies": {
-    "run-test": "*"
+    "run-test": "*",
+    "a-wild-universe-appeared": "*"
   },
   "scripts": {
     "test": "node test"

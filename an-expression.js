@@ -302,8 +302,8 @@ module.exports = library.export(
         throw new Error("What role do items in a "+kindOfParent+" play?")
       }
 
-      tree.setAttribute("parentId", itemId, parentId)
-      tree.setAttribute("role", itemId, role)
+      setAttribute(tree, "parentId", itemId, parentId)
+      setAttribute(tree, "role", itemId, role)
     }
 
     function childListName(tree, parentId) {
@@ -320,34 +320,46 @@ module.exports = library.export(
       }
     }
 
-    ExpressionTree.prototype.addToParent = function(parentId, item) {
+    anExpression.addToParent = function(treeId, parentId, attributes) {
+      var tree = anExpression.getTree(treeId)
 
-      var bodyOrArgumentsOrWhatever = childListName(this, parentId)
+      addToParent(tree, parentId, attributes)
+    }
 
-      var kindOfParent = this.getAttribute("kind", parentId)
 
-      setParent(this, parentId, kindOfParent, item.id)
+    ExpressionTree.prototype.addToParent = function(parentId, attributes) {
+      this.log("anExpression.addToParent", this.id, parentId, attributes)
 
-      var childIds = this.ensureList(bodyOrArgumentsOrWhatever, parentId)
+      addToParent(this, parentId, attributes)
+    }
 
-      var lastChild = childIds.get(childIds.length-1)
+    function addToParent(tree, parentId, attributes) {
+
+      setAttributes(attributes, tree)
+
+      var bodyOrArgumentsOrWhatever = childListName(tree, parentId)
+
+      var kindOfParent = tree.getAttribute("kind", parentId)
+
+      setParent(tree, parentId, kindOfParent, attributes.id)
+
+      var childIds = tree.ensureList(bodyOrArgumentsOrWhatever, parentId)
+
+      var lastChild = childIds.get(childIds.length - 1)
 
       if (lastChild) {
-        var splicePosition = indexOf(this, lastChild)+1
-        debugger
+        var splicePosition = indexOf(tree, lastChild) + 1
       } else {
-        var splicePosition = indexOf(this, parentId)+1
+        var splicePosition = indexOf(tree, parentId) + 1
       }
       
       if (splicePosition == 0) {
         throw new Error("Probs shouldn't be adding a child as the root of the tree")
       }
 
-      this.expressionIds.splice(splicePosition, 0, item.id)
+      tree.expressionIds.splice(splicePosition, 0, attributes.id)
 
-      setAttributes(item, this)
-
-      childIds.set(childIds.next(), item.id)
+      childIds.set(childIds.next(), attributes.id)
     }
 
     anExpression.lineIn = function(functionLiteralId, treeId, index, attributes) {
@@ -391,47 +403,59 @@ module.exports = library.export(
       tree.setAttribute("role", lineId, "function literal line")
     }
 
+    anExpression.insertExpression = function(treeId, attributes, relationship, relativeToThisId) {
+      var tree = anExpression.getTree(treeId)
+
+      insertExpression(tree, attributes, relationship, relativeToThisId)
+    }
+
     ExpressionTree.prototype.insertExpression = function(attributes, relationship, relativeToThisId) {
+      this.log("anExpression.insertExpression", this.id, attributes, relationship, relativeToThisId)
+
+      insertExpression(this, attributes, relationship, relativeToThisId)
+    }
+
+
+    function insertExpression(tree, attributes, relationship, relativeToThisId) {
       
       var newExpressionId = attributes.id
-      var parentId = this.getAttribute("parentId", relativeToThisId)
-
-      addToParent(parentId, newExpressionId)
+      var parentId = tree.getAttribute("parentId", relativeToThisId)
+      var bodyOrArgumentsOrWhatever = childListName(tree, parentId)
+      var childIds = tree.ensureList(bodyOrArgumentsOrWhatever, parentId)
+      var kindOfParent = tree.getAttribute("kind", parentId)
 
       if (relationship == "before") {
-        var splicePosition = indexBefore(this, relativeToThisId)
+        var splicePosition = indexBefore(tree, relativeToThisId)
         var deleteThisMany = 0
 
       } else if (relationship == "after") {
 
-        var splicePosition = indexAfter(this, relativeToThisId)
+        var splicePosition = indexAfter(tree, relativeToThisId)
         var deleteThisMany = 0
 
       } else if (relationship == "inPlaceOf") {
 
-        var splicePosition = 0
+        var splicePosition = indexBefore(tree, relativeToThisId)
         var deleteThisMany = 1
 
       } else if (relationship == "inside") {
-
-        var deleteThisMany = 0
-        var firstChild = this.getListItem(childListName(this, parentId), 0)
-
-        if (firstChild) {
-          var splicePosition = lastDescendantAfter(tree, this.expressionIds, indexOf(this, firstChild))
-        } else {
-          var splicePosition = indexOf(this, parentId)
-        }
+        throw new Error("insertExpression(..., \"inside\", ...) is deprecated. Use  tree.addToParent")
 
       } else { throw new Error() }
 
-      setAttributes(attributes, this)
+      setAttributes(attributes, tree)
 
-      this.expressionIds.splice(splicePosition, deleteThisMany, newExpressionId)
+      setParent(tree, undefined, kindOfParent, relativeToThisId)
 
-      var body = this.ensureList("body", parentId)
-      
-      body.spliceRelativeTo(relativeToThisId, relationship, 0, newExpressionId)
+      setParent(tree, parentId, kindOfParent, newExpressionId)
+
+      tree.expressionIds.splice(splicePosition, deleteThisMany, newExpressionId)
+
+      var firstChildWouldBeHere = indexBefore(tree, parentId) + 1
+
+      var splicePositionWithinChildren = splicePosition - firstChildWouldBeHere
+
+      childIds.splice(splicePositionWithinChildren, deleteThisMany, newExpressionId)
     }
 
     function indexOf(tree, id) {
@@ -620,6 +644,7 @@ module.exports = library.export(
       var list = this.lists[key][expressionId]
 
       if (this.parent && typeof list == "undefined") {
+
         list = this.parent.getList(key, expressionId)
       }
 
@@ -717,7 +742,6 @@ module.exports = library.export(
       setAttribute(tree, "parentId", valueId, objectId)
       setAttribute(tree, "pairId", valueId, pairId)
       setAttribute(tree, "valueId", pairId, valueId)
-      console.log("Set valueId of "+pairId+" to "+pairId)
 
       var pairs = tree.ensureList("pairIds", objectId)
 

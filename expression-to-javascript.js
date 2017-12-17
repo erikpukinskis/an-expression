@@ -19,11 +19,12 @@ module.exports = library.export(
       var makeCode = codeGenerators[kind]
 
       if (typeof makeCode != "function") {
-        debugger
         throw new Error("No code generator called "+kind)
       }
 
-      return makeCode(tree, id)
+      var code = makeCode(tree, id)
+
+      return code
     }
 
     var codeGenerators = {
@@ -31,17 +32,17 @@ module.exports = library.export(
         var argIds = tree.getList("arguments", id)
         var name = tree.getAttribute("functionName", id)
 
-        if (!argIds) {
+        if (!argIds || argIds.length < 1) {
           var argLines = ""
         } else {
-          var argLines = argIds.map(toArgLine).join(",\n")
+          var argLines = "\n"+argIds.map(toArgLine).join(",\n")
         }
 
         function toArgLine(expressionId) {
           return "  "+expressionToJavascript(tree, expressionId)
         }
 
-        return name+"(\n"+argLines+")"
+        return name+"("+argLines+")"
       },
       "array literal": function(tree, id) {
         var itemIds = tree.getList("items", id)
@@ -53,7 +54,12 @@ module.exports = library.export(
         return "[\n"+items.join(",\n")+"\n]"
       },
       "function literal": function(tree, id) {
-        var names = tree.getList("argumentNames", id).join(", ")
+        var names = tree.getList("argumentNames", id)
+        if (names) {
+          names = names.join(", ")
+        } else {
+          names = ""
+        }
 
         var body = tree.getList("body", id)
 
