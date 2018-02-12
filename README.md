@@ -12,7 +12,7 @@ javascriptToEzjs("blah({\n  a: 1,})", tree)
 Once we have built a tree, we can query the data. Here we'll iterate through the key value pairs on that object expression, and expect to see the number 1:
 
 ```javascript
-var objectExpressionId = tree.root().arguments[0]
+var objectExpressionId = tree.getListItem("arguments", tree.rootId(), 0)
 
 tree.eachListItem(
   "pairIds",
