@@ -10,7 +10,8 @@
   },
   "devDependencies": {
     "run-test": "*",
-    "a-wild-universe-appeared": "*"
+    "a-wild-universe-appeared": "*",
+    "javascript-to-ezjs": "*"
   },
   "scripts": {
     "test": "node test"

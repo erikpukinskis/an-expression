@@ -9,14 +9,25 @@ module.exports = library.export(
       throw new Error("deprecated")
     }
 
+    var trees = {}
     anExpression.tree = function(data) {
-      if (data) {
-        var tree = new ExpressionTree(data)
-      } else {
-        var tree = new ExpressionTree()
-      }
-
+      var tree = new ExpressionTree(data)
+      trees[tree.id] = tree
       return tree
+    }
+
+    anExpression.getTree = function(treeId) {
+      return trees[treeId]
+    }
+
+    anExpression.forgetTrees = function() {
+      trees = {}
+    }
+
+    var lastTreeId = 300
+    function aTreeId() {
+      lastTreeId++
+      return "tree"+lastTreeId.toString(36)
     }
 
     function ExpressionTree(id) {
@@ -39,8 +50,6 @@ module.exports = library.export(
       this.onnewexpressionCallbacks = []
 
       this.toJavaScript = treeToJavascript.bind(null, this)
-
-      trees[this.id] = this
     }
 
     function freshAttributes() {
@@ -105,21 +114,6 @@ module.exports = library.export(
       lastExpressionInteger++
       var id = lastExpressionInteger.toString(36)
       return "exp-"+id
-    }
-
-    var trees = {}
-    anExpression.getTree = function(treeId) {
-      return trees[treeId]
-    }
-
-    anExpression.forgetTrees = function() {
-      trees = {}
-    }
-
-    var lastTreeId = 300
-    function aTreeId() {
-      lastTreeId++
-      return "tree"+lastTreeId.toString(36)
     }
 
     ExpressionTree.prototype.next = function() {
