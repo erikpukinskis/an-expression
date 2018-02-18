@@ -392,7 +392,7 @@ module.exports = library.export(
       childIds.set(childIds.next(), attributes.id)
     }
 
-    anExpression.lineIn = function(functionLiteralId, treeId, index, attributes) {
+    anExpression.lineIn = function(treeId, functionLiteralId, index, attributes) {
 
       if (typeof attributes != "object") {
         throw new Error("anExpression.lineIn takes attributes fourth")
@@ -419,7 +419,7 @@ module.exports = library.export(
       this.expressionIds.set(index, attributes.id)
 
 
-      this.log("anExpression.lineIn", functionLiteralId, this.id, index, attributes)
+      this.log("anExpression.lineIn", this.id, functionLiteralId, index, attributes)
 
       // expression.role = "function literal line"
 
