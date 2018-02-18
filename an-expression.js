@@ -17,6 +17,9 @@ module.exports = library.export(
     }
 
     anExpression.getTree = function(treeId) {
+      if (!trees[treeId]) {
+        throw new Error("No tree with id "+treeId)
+      }
       return trees[treeId]
     }
 
