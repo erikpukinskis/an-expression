@@ -47,6 +47,9 @@ module.exports = library.export(
       this.expressionIds = forkableList()
       this.attributes = freshAttributes()
       this.lists = freshLists()
+      this.parent = null
+      this.branches = []
+      this.idIsGlobal = false
 
       // Instance data
       this.onchangedCallbacks = []
@@ -134,13 +137,43 @@ module.exports = library.export(
       branch.parent = parent
       branch.expressionIds = parent.expressionIds.fork()
 
+      this.branches.push(branch)
+
       return branch
+    }
+
+    ExpressionTree.prototype.getLocalTreeIds = function(ids) {
+      if (!ids) {
+        ids = []
+      }
+
+      if (!this.idIsGlobal) {
+        ids.push(this.id)
+      }
+
+      this.branches.forEach(
+        function(fork) {
+          fork.getLocalTreeIds(ids) })
+
+      return ids
+    }
+
+    ExpressionTree.prototype.swapInGlobalTreeIds = function(globalIds) {
+
+      if (!this.idIsGlobal) {
+        this.id = globalIds[this.id]
+        this.idIsGlobal = true
+      }
+
+      this.branches.forEach(
+        function(fork) {
+          fork.swapInGlobalTreeIds(ids) })
     }
 
     anExpression.addToTree = function(treeId, index, attributes) {
       var tree = this.getTree(treeId)
       setAttributes(attributes, tree)
-      tree.expressionIds.set(index, attribues.id)
+      tree.expressionIds.set(index, attributes.id)
     }
 
     ExpressionTree.prototype.addExpressionAt = function(index, attributes) {
@@ -825,8 +858,6 @@ module.exports = library.export(
 
     // GENERATORS
 
-    anExpression.id = anId
-
     anExpression.stringLiteral =
       function(string) {
         return {
@@ -950,6 +981,8 @@ module.exports = library.export(
       }
     }
 
+    anExpression.id = anId
+    anExpression.treeId = aTreeId
 
     function contains(array, value) {
       if (!Array.isArray(array)) {
