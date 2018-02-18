@@ -402,7 +402,7 @@ module.exports = library.export(
 
       setAttributes(attributes, tree)
 
-      tree.expressionIds.set(index, id)
+      tree.expressionIds.set(index, attributes.id)
 
       addLine(tree, functionLiteralId, attributes.id)
     }
