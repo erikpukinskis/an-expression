@@ -429,8 +429,9 @@ module.exports = library.export(
     function addLine(tree, functionId, lineId) {
       var body = tree.ensureList("body", functionId)
       body.set(body.next(), lineId)
-      tree.setAttribute("parentId", lineId, functionId)
-      tree.setAttribute("role", lineId, "function literal line")
+
+      setAttribute(tree, "parentId", lineId, functionId)
+      setAttribute(tree, "role", lineId, "function literal line")
     }
 
     anExpression.insertExpression = function(treeId, attributes, relationship, relativeToThisId) {
