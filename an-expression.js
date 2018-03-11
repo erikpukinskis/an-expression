@@ -875,8 +875,6 @@ module.exports = library.export(
       if (!attributes) {
         return {
           kind: "function literal",
-          argumentNames: [],
-          body: [],
           id: anId(),
         }
       }
@@ -887,8 +885,8 @@ module.exports = library.export(
         kind: "function literal",
         id: anId(),
         functionName: attributes.functionName,
-        argumentNames: attributes.argumentNames||[],
-        body: attributes.body||[],
+        argumentNames: attributes.argumentNames,
+        body: attributes.body,
       }
     }
 
