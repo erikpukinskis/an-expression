@@ -559,8 +559,11 @@ module.exports = library.export(
     }
 
 
-    ExpressionTree.prototype.logTo = function(universe) {
+    ExpressionTree.prototype.logTo = function(universe, shouldAddSelf) {
       this.universe = universe
+      if (shouldAddSelf) {
+        this.log("anExpression.tree", this.id)
+      }
     }
 
     ExpressionTree.prototype.log = function(method, args, etc) {
