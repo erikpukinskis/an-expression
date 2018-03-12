@@ -394,6 +394,8 @@ module.exports = library.export(
 
     anExpression.lineIn = function(treeId, functionLiteralId, index, attributes) {
 
+      throw new Error("Wtf is lineIn for? If we're just adding a line inside an empty context, we can't know the index (well, it'll be parentIndex+1, but, how can we look up parentIndex?) so we need to use addToParent, and if we are adding to something with stuff in it, we need to use insertExpression. So wtf is lineIn for?")
+
       if (typeof attributes != "object") {
         throw new Error("anExpression.lineIn takes attributes fourth")
       }
@@ -417,7 +419,6 @@ module.exports = library.export(
 
       setAttributes(attributes, this)
       this.expressionIds.set(index, attributes.id)
-
 
       this.log("anExpression.lineIn", this.id, functionLiteralId, index, attributes)
 
@@ -901,7 +902,6 @@ module.exports = library.export(
 
     anExpression.emptyExpression =
       function() {
-      throw new Error("impl")
         return {
           kind: "empty expression",
           id: anId(),
