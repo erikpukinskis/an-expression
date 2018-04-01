@@ -10,8 +10,8 @@ module.exports = library.export(
     }
 
     var trees = {}
-    anExpression.tree = function(data) {
-      var tree = new ExpressionTree(data)
+    anExpression.tree = function(id) {
+      var tree = new ExpressionTree(id)
       trees[tree.id] = tree
       return tree
     }
