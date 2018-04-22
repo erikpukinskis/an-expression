@@ -583,11 +583,7 @@ module.exports = library.export(
     }
 
     ExpressionTree.prototype.rootId = function() {
-      var id = this.expressionIds.get(0)
-      if (typeof id == "undefined") {
-        throw new Error("Tree has no root!")
-      }
-      return id
+      return this.expressionIds.get(0)
     }
 
     ExpressionTree.prototype.getArgumentName = function(expressionId, index) {
