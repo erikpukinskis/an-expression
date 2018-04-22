@@ -241,6 +241,9 @@ module.exports = library.export(
         setAttribute(tree, "isDeclaration", id, attributes.isDeclaration) 
         setAttribute(tree, "parentId", rhsId, id)
         break;
+      case "leaf expression":
+        setAttribute(tree, "string", id,attributes.string)
+        break;
       case "string literal":
         setAttribute(tree, "string", id,attributes.string)
         break;
