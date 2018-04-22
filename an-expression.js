@@ -661,6 +661,8 @@ module.exports = library.export(
         throw new Error("tried to get item "+index+" from "+key+" list on "+expressionId+" but couldn't find a list?")
       }
 
+      if (list == EMPTY_LIST) { return }
+
       return list.get(index)
     }
 
