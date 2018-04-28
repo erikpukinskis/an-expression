@@ -207,6 +207,11 @@ module.exports = library.export(
       }
 
       switch(attributes.kind) {
+      case "leaf expression":
+        setAttribute(tree, "string", id, attributes.string)
+        setAttribute(tree, "leftHandSide", id, attributes.leftHandSide)
+        setAttribute(tree, "isDeclaration", id, attributes.isDeclaration)
+        break;
       case "function literal":
         var attributesHaveBody = tree.attributes.body && tree.attributes.body.length
         var bodyAlreadyExists = tree.getList("body", attributes.id)
