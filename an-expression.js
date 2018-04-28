@@ -69,7 +69,8 @@ module.exports = library.export(
         valueId: {},
         pairId: {},
         parentId: {},
-        variableName: {},
+        variableName: {}, // deprecated
+        leftHandSide: {},
         expression: {},
         isDeclaration: {},
         role: {},
